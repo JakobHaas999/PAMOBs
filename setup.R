@@ -4,7 +4,9 @@
 # all required packages
 packages <- c(
   "pammtools",
-  "partykit"
+  "partykit",
+  "dplyr",
+  "survival"
 )
 
 # Function that checks if a package is installed and installs it if not
