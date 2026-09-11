@@ -19,6 +19,34 @@
 # #> 6 1.4354894      0
 # mean(surv_data$status == 0)
 # #> [1] 0.604
+#
+## Check beta estimates with censored data
+# set.seed(234)
+# n <- 1000
+# x <- rbinom(n, 1, prob = 0.5)
+# true_beta <- log(2)
+# times <- sim_pem(
+#   n = n,
+#   lambdas = c(0.1, 0.3, 0.05),
+#   cuts = c(2, 5),
+#   X = matrix(x, ncol = 1),
+#   beta = true_beta
+# )
+# surv_data <- sim_censoring(times, 0.6)
+# surv_data <- cbind(surv_data, x)
+# ped <- pammtools::as_ped(
+#   survival::Surv(time, status) ~ x,
+#   data = surv_data,
+#   cut = c(2, 5)
+# )
+# fit <- glm(
+#   formula = ped_status ~ interval + x,
+#   data = ped,
+#   offset = ped$offset,
+#   family = poisson(link = "log")
+# )
+# exp(coef(fit)[["x"]])
+# #> [1] 2.007998
 
 sim_censoring <- function(times, censoring_rate) {
   # Arguments:
