@@ -29,8 +29,6 @@ sim_covariates <- function(n, spec) {
   # n: Number of simulations/observations
   # spec: List of Specifications of covariates
 
-
-
   checkmate::assert_count(n, positive = TRUE)
   checkmate::assert_list(spec, min.len = 1)
 
