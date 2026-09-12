@@ -55,7 +55,7 @@ sim_censoring <- function(times, censoring_rate) {
 
   # asserts
   checkmate::assert_numeric(times, any.missing = FALSE, lower = 0)
-  checkmate::assert_true(all(t > 0))
+  checkmate::assert_true(all(times > 0))
   checkmate::assert_number(censoring_rate)
   checkmate::assert_true(censoring_rate > 0 && censoring_rate < 1)
 
@@ -64,7 +64,7 @@ sim_censoring <- function(times, censoring_rate) {
       p_censored <- mean(1 - exp(-lambda_c * times))
       p_censored - censoring_rate
     },
-    interval = c(1e-8, 100)
+    interval = c(1e-8, 10000)
   )$root
 
   censoring_times <- rexp(length(times), rate = lambda_c)

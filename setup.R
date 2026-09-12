@@ -7,7 +7,8 @@ packages <- c(
   "partykit",
   "dplyr",
   "survival",
-  "mgcv"
+  "mgcv",
+  "sandwich"
 )
 
 # Function that checks if a package is installed and installs it if not
