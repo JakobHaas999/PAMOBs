@@ -44,4 +44,3 @@ sim_covariates <- function(n, spec) {
 
   as.data.frame(covariates)
 }
-n <- 1000
