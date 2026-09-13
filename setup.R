@@ -8,7 +8,8 @@ packages <- c(
   "dplyr",
   "survival",
   "mgcv",
-  "sandwich"
+  "sandwich",
+  "checkmate"
 )
 
 # Function that checks if a package is installed and installs it if not
