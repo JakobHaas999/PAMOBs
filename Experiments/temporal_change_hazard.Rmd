@@ -1,0 +1,13 @@
+---
+title: "temporal_change_hazard"
+output: html_document
+---
+
+```{r}
+## setup
+source(here::here("setup.R"))
+source(here::here("R/simulation_pem.R"))
+source(here::here("R/simulation_censoring.R"))
+source(here::here("R/fit_temporal_pemob.R"))
+```
+
