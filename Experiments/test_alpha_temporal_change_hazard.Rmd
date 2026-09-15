@@ -51,6 +51,9 @@ cat("Estimated Type 1 Error: ", type_one_error, "\n")
 
 ```
 
+
+# Scores
+
 ```{r}
 set.seed(234)
 surv_data2 <- sim_censoring(

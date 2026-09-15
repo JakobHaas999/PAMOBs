@@ -11,3 +11,12 @@ source(here::here("R/simulation_censoring.R"))
 source(here::here("R/fit_temporal_pemob.R"))
 ```
 
+# Test temporal_pemob under different scenarios
+
+```{r}
+## Function
+validate_temporal_pemob <-function(n,
+                                   lambdas,
+                                   )
+```
+
