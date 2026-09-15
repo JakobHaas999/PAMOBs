@@ -14,9 +14,177 @@ source(here::here("R/fit_temporal_pemob.R"))
 # Test temporal_pemob under different scenarios
 
 ```{r}
-## Function
+## Function for validation
 validate_temporal_pemob <-function(n,
                                    lambdas,
-                                   )
+                                   cuts,
+                                   censoring_rate,
+                                   ped_interval = 0.25,
+                                   title = NULL,
+                                   ...) {
+  
+  ## Simulate data
+  times <- sim_pem(n, lambdas, cuts = cuts)
+  surv_data <- sim_censoring(times, censoring_rate)
+  
+  ## Fit tree model
+  fit <- temporal_pemob(
+    formula = Surv(time, status) ~ 1,
+    data = surv_data,
+    cut = seq(0, max(surv_data$time), by = ped_interval),
+    ...
+  )
+  
+  pred_data <- data.frame(tend = sort(unique(fit$ped$tend)))
+  pred_hazard <- predict(fit,
+                         newdata = pred_data,
+                         type = "hazard")
+  
+  true_hazard <- numeric(nrow(pred_data))
+  cuts_iter <- c(0, cuts, Inf)
+  for (i in seq_along(lambdas)) {
+    idx <- unique(pred_data$tend) > cuts_iter[[i]] &
+      unique(pred_data$tend) <= cuts_iter[[i + 1]]
+    true_hazard[idx] <- lambdas[[i]]
+  }
+  
+  plt_data <- data.frame(
+    tend = unique(pred_data$tend),
+    est_hazard = pred_hazard,
+    true_hazard = true_hazard
+  )
+  plt <- ggplot(plt_data, aes(x = tend)) +
+    geom_step(aes(y = est_hazard, colour = "hazard estimate")) +
+    geom_step(aes(y = true_hazard, colour = "hazard true")) +
+    labs(
+      x = "t",
+      y = expression(lambda(t)),
+      title = title
+    ) +
+    scale_y_continuous(limits = c(0, lambdas[[length(lambdas)]] + 0.5)) +
+    theme_bw()
+  
+  list(
+    tree = fit$tree,
+    ped = fit$ped,
+    cut = fit$cut,
+    pred_hazard = pred_hazard,
+    plot_data = plt_data,
+    plot = plt
+  )
+}
+```
+
+## Scenario 1:
+
+$$
+\lambda(t) = \begin{cases}
+\lambda_1 & t \leq \tau, \\
+\lambda_2 & t > \tau
+\end{cases}
+$$
+
+```{r}
+set.seed(123)
+n <- 10000
+lambdas <- c(0.2, 0.7)
+cut <- 4
+censoring_rates <- seq(0.1, 0.9, by = 0.2)
+
+res1 <- lapply(censoring_rates, function(rate) {
+  validate_temporal_pemob(
+    n = n,
+    lambdas = lambdas,
+    cuts = cut,
+    censoring_rate = rate,
+    title = sprintf("Censoring rate = %s", rate)
+  )
+})
+
+# Plot estimated hazards
+# plots <- lapply(res1, function(x) x$plot)
+# do.call(gridExtra::grid.arrange, c(plots, ncol = 3))
+
+# Inspect coefficients/hazards
+model_coef <- lapply(res1, function(x) {
+  fit <- x$tree
+  terminal_nodes <- nodeids(fit, terminal = TRUE)
+  models <- nodeapply(
+    fit,
+    ids = terminal_nodes,
+    FUN = function(node) node$info$object
+  )
+  vapply(models, function(mod) {
+    exp(coef(mod))["(Intercept)"]
+  }, numeric(1))
+})
+model_coef_df <- do.call(
+  rbind,
+  lapply(seq_along(model_coef), function(i) {
+    data.frame(
+      censoring_rate = censoring_rates[i],
+      node = names(model_coef[[i]]),
+      hazard = round(model_coef[[i]], 4)
+    )
+  })
+)
+model_coef_df
+
+
+```
+
+## Scenario 2:
+
+$$
+\lambda(t) = \begin{cases}
+\lambda_1 & t \leq \tau_1, \\
+\lambda_2 & \tau_1 < t \leq \tau_2, \\
+\lambda_3 & t > \tau_2 
+\end{cases}
+$$
+
+```{r}
+set.seed(234)
+n <- 10000
+lambdas <- c(0.2, 0.5, 0.8)
+cuts <- c(2, 4)
+censoring_rates <- c(0.25, 0.5, 0.75)
+
+res2 <- lapply(censoring_rates, function(rate) {
+  validate_temporal_pemob(
+    n = n,
+    lambdas = lambdas,
+    cuts = cuts,
+    censoring_rate = rate,
+    title = sprintf("Censoring rate = %s", rate)
+  )
+})
+
+# Plot estimated hazards
+plots <- lapply(res2, function(x) x$plot)
+do.call(gridExtra::grid.arrange, c(plots, ncol = 3))
+
+# Inspect coefficients/hazards
+model_coef2 <- lapply(res2, function(x) {
+  fit <- x$tree
+  models <- nodeapply(
+    fit, ids = nodeids(fit, terminal = TRUE),
+    FUN = function(node) node$info$object
+  )
+  vapply(models, function(mod) {
+    exp(coef(mod))["(Intercept)"]
+  }, numeric(1))
+})
+model_coef_df2 <- do.call(
+  rbind,
+  lapply(seq_along(model_coef2), function(i) {
+    data.frame(
+      censoring_rate = censoring_rates[[i]],
+      node = names(model_coef2[[i]]),
+      hazard = round(model_coef[[i]], 4)
+    )
+  })
+)
+model_coef_df2
 ```
 
