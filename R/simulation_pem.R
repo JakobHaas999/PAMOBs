@@ -28,8 +28,10 @@
 #   beta = beta
 # )
 # head(t)
-sim_pem <- function(n, lambdas, cuts, X = NULL, beta = NULL) {
-  # TODO comments
+sim_pem <- function(n, lambdas, cuts = NULL, X = NULL, beta = NULL) {
+  if (length(cuts) == 1 && cuts == 0) {
+    cuts <- NULL
+  }
 
   # asserts
   checkmate::assert_count(n, positive = TRUE)
@@ -40,13 +42,23 @@ sim_pem <- function(n, lambdas, cuts, X = NULL, beta = NULL) {
     min.len = 1
   )
   checkmate::assert_true(all(lambdas > 0))
-  checkmate::assert_numeric(cuts, any.missing = FALSE, len = length(lambdas) - 1)
+  checkmate::assert_numeric(cuts,
+    any.missing = FALSE,
+    len = length(lambdas) - 1,
+    null.ok = TRUE
+  )
   if (length(cuts) > 1) {
     checkmate::assert_true(all(diff(cuts) > 0))
   }
   if (!is.null(X)) {
-    checkmate::assert_matrix(X, any.missing = FALSE, nrows = n)
-    checkmate::assert_numeric(beta, any.missing = FALSE, len = ncol(X))
+    checkmate::assert(
+      checkmate::check_numeric(X, any.missing = FALSE, len = n),
+      checkmate::check_matrix(X, any.missing = FALSE, nrows = n),
+      combine = "or"
+    )
+    n_features <- if (is.matrix(X)) ncol(X) else 1
+    checkmate::assert_numeric(beta, any.missing = FALSE, len = n_features)
+    X <- as.matrix(X)
   }
 
   cuts <- c(0, cuts, Inf)
