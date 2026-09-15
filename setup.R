@@ -10,7 +10,8 @@ packages <- c(
   "mgcv",
   "sandwich",
   "checkmate",
-  "ggplot2"
+  "ggplot2",
+  "here"
 )
 
 # Function that checks if a package is installed and installs it if not
