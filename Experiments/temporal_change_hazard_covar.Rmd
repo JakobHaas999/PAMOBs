@@ -5,17 +5,15 @@ output: html_document
 ```{r}
 ## setup
 source(here::here("setup.R"))
-source(here::here("R/simulation_covariates.R"))
 source(here::here("R/simulation_pem.R"))
-source(here::here("R/simulation_censoring.R"))
-source(here::here("R/simulation_pem_data.R"))
 source(here::here("R/fit_temporal_pemob.R"))
 ```
 
 
 
 ## Temporal changes oft the hazard in a PEM with covariates
-Idea:
+
+### Scenario 1: One temporal change in the hazard rate
 $$
 \lambda(t \mid x_i) = \begin{cases}
 \lambda_1 \exp(x_i^T \beta) & t \leq \tau, \\
@@ -66,4 +64,36 @@ temporal_pemob(
 )
 ```
 
+### Scenario 2: No temporal change in the hazard -> no split expected
+
+$$
+\lambda(t | x_i) = \lambda \exp(x_i^T \beta)
+$$
+
+```{r}
+## Simulate data
+set.seed(2)
+lambda <- 0.5
+# Other parameters as before
+surv_data <- sim_pem_data(
+  n = n,
+  covariate_spec = covariate_spec,
+  formula = ~ x1 + x2,
+  lambdas = lambda,
+  cuts = NULL,
+  beta = true_beta,
+  censoring_rate = censoring_rate
+)
+
+fit <- temporal_pemob(
+  formula = Surv(time,status) ~ x1 + x2,
+  data = surv_data,
+  cut = seq(0, max(surv_data$time), by = 0.25)
+)
+tree <- fit$tree
+terminal_node <- nodeids(tree, terminal = TRUE)
+model <- tree[[terminal_node]]
+round(coef(model)[c("x1", "x2")], 4)
+round(exp(coef(model))["(Intercept)"], 4)
+```
 

@@ -7,7 +7,6 @@ output: html_document
 ## setup
 source(here::here("setup.R"))
 source(here::here("R/simulation_pem.R"))
-source(here::here("R/simulation_censoring.R"))
 source(here::here("R/fit_temporal_pemob.R"))
 ```
 
