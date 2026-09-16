@@ -9,7 +9,9 @@ packages <- c(
   "survival",
   "mgcv",
   "sandwich",
-  "checkmate"
+  "checkmate",
+  "ggplot2",
+  "here"
 )
 
 # Function that checks if a package is installed and installs it if not

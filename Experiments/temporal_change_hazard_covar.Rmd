@@ -1,0 +1,69 @@
+---
+title: "temporal_change_hazard_covar"
+output: html_document
+---
+```{r}
+## setup
+source(here::here("setup.R"))
+source(here::here("R/simulation_covariates.R"))
+source(here::here("R/simulation_pem.R"))
+source(here::here("R/simulation_censoring.R"))
+source(here::here("R/simulation_pem_data.R"))
+source(here::here("R/fit_temporal_pemob.R"))
+```
+
+
+
+## Temporal changes oft the hazard in a PEM with covariates
+Idea:
+$$
+\lambda(t \mid x_i) = \begin{cases}
+\lambda_1 \exp(x_i^T \beta) & t \leq \tau, \\
+\lambda_2 \exp(x_i^T \beta) & t > \tau
+\end{cases}
+$$
+Model:
+$$
+\lambda_{i, j} = \lambda_j * \exp(\beta_{1, b} \cdot x_{1, i} + \beta_{2, b} \cdot x_{2, i}),
+$$
+where $x_1 \sim N(0, 1)$ and $x_2 \sim Ber(0.5)$
+
+```{r}
+## Simulate data
+set.seed(1)
+n <- 10000
+lambdas <- c(0.2, 0.7)
+cut <- 4
+censoring_rate <- 0.4
+covariate_spec <- list(
+  x1 = list(
+    distfun = rnorm,
+    mean = 0,
+    sd = 1
+  ),
+  x2 = list(
+    distfun = rbinom,
+    size = 1,
+    prob = 0.5
+  )
+)
+true_beta <- c(0.5, -0.4)
+
+surv_data <- sim_pem_data(
+  n = n,
+  covariate_spec = covariate_spec,
+  formula = ~ x1 + x2,
+  lambdas = lambdas,
+  cuts = cut,
+  beta = true_beta,
+  censoring_rate = censoring_rate
+)
+
+temporal_pemob(
+  formula = Surv(time, status) ~ x1 + x2,
+  data = surv_data,
+  cut = seq(0, max(surv_data$time), by = 0.25)
+)
+```
+
+

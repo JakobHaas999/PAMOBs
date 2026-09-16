@@ -1,0 +1,108 @@
+---
+title: "test_alpha_temporal_change_hazard"
+output: html_document
+---
+
+# Type I Error of Temporal PEM-MOB
+
+```{r}
+### Simulation
+
+## Parameters
+
+# Parameters for data generation
+n_obs <- 1000
+lambdas <- rep(0.5, 2)
+cuts <- 4
+censoring_rate <- 0.3
+
+# Simulation parameters
+n_sim <- 10000
+
+
+set.seed(123)
+rejections <- replicate(n_sim, {
+  # Simulate data
+  times <- sim_pem(
+    n = n_obs,
+    lambdas = lambdas,
+    cuts = cuts
+  )
+  surv_data <- sim_censoring(
+    times = times,
+    censoring_rate = censoring_rate
+  )
+  res <- temporal_pemob(
+    formula = Surv(time, status) ~ 1,
+    data = surv_data,
+    cut = seq(0, max(surv_data$time), by = 0.25),
+    alpha = 0.05
+  )
+  
+  terminal_nodes <- partykit::nodeids(res$tree, terminal = TRUE)
+  length(terminal_nodes) > 1
+  
+})
+
+type_one_error <- mean(rejections)
+
+cat("Number of rejections: ", sum(rejections), "\n")
+cat("Estimated Type 1 Error: ", type_one_error, "\n")
+
+```
+
+
+# Scores
+
+```{r}
+set.seed(234)
+surv_data2 <- sim_censoring(
+  times = sim_pem(
+    n = 10000,
+    lambdas = c(0.2, 0.7),
+    cuts = 4
+  ),
+  censoring_rate = 0.3
+)
+ped <- pammtools::as_ped(
+  Surv(time, status) ~ 1,
+  data = surv_data2,
+  cut = seq(0, max(surv_data2$time), by = 0.25)
+)
+
+fit <- glm(
+  ped_status ~ 1 + offset(offset),
+  family = poisson(link = "log"),
+  data = ped
+)
+
+scores <- sandwich::estfun(fit)
+head(scores)
+
+score_df <- data.frame(
+  id = ped$id,
+  tstart = ped$tstart,
+  tend = ped$tend,
+  status = ped$ped_status,
+  mu = fitted(fit),
+  score = as.numeric(scores)
+)
+
+score_time <- score_df %>%
+  group_by(tend) %>%
+  summarise(
+    score = sum(score),
+    .groups = "drop"
+  ) %>%
+  arrange(tend) %>%
+  mutate(cum_score = cumsum(score))
+
+ggplot(score_time, aes(tend, cum_score)) +
+  geom_line() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_bw()
+  
+
+
+```
+
