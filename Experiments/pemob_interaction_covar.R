@@ -1,9 +1,6 @@
 ## source relevant files
 source("setup.R")
-source("R/simulation_covariates.R")
 source("R/simulation_pem.R")
-source("R/simulation_censoring.R")
-source("R/simulation_pem_data.R")
 source("R/fit_mob_pem.R")
 
 ## scenarios:

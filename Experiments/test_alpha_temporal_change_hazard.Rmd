@@ -4,6 +4,13 @@ output: html_document
 ---
 
 # Type I Error of Temporal PEM-MOB
+```{r}
+## setup
+source(here::here("setup.R"))
+source(here::here("R/simulation_pem.R"))
+ source(here::here("R/fit_temporal_pemob.R"))
+```
+
 
 ```{r}
 ### Simulation
