@@ -6,7 +6,7 @@ output: html_document
 ## setup
 source(here::here("setup.R"))
 source(here::here("R/simulation_pem.R"))
-source(here::here("R/fit_temporal_pemob.R"))
+source(here::here("R/pemtree.R"))
 ```
 
 
@@ -57,7 +57,7 @@ surv_data <- sim_pem_data(
   censoring_rate = censoring_rate
 )
 
-temporal_pemob(
+pemtree(
   formula = Surv(time, status) ~ x1 + x2,
   data = surv_data,
   cut = seq(0, max(surv_data$time), by = 0.25)
@@ -85,7 +85,7 @@ surv_data <- sim_pem_data(
   censoring_rate = censoring_rate
 )
 
-fit <- temporal_pemob(
+fit <- pemtree(
   formula = Surv(time,status) ~ x1 + x2,
   data = surv_data,
   cut = seq(0, max(surv_data$time), by = 0.25)

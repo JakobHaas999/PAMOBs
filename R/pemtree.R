@@ -1,8 +1,3 @@
-# NOTE:
-# PED rows from the same subject are not independent.
-# This analysis is currently exploratory and is used to assess whether
-# a temporal structural break is visible to MOB at all.
-
 #' Fit a temporal PEM-MOB
 #'
 #' Transforms survival data into piecewise exponential data (PED) and fits
@@ -15,8 +10,8 @@
 #' @param cut Cut points used for the PED transformation.
 #' @param ... Additional arguments passed to partykit::glmtree().
 #'
-#' @return An object of class "temporalPemob".
-temporal_pemob <- function(formula, data, cut, ...) {
+#' @return An object of class "pemtree".
+pemtree <- function(formula, data, cut, ...) {
   checkmate::assert_formula(formula)
   checkmate::assert_data_frame(data)
   checkmate::assert_numeric(cut, any.missing = FALSE)
@@ -56,7 +51,7 @@ temporal_pemob <- function(formula, data, cut, ...) {
     data = data,
     ped = ped,
     cut = cut
-  ), class = "temporalPemob")
+  ), class = "pemtree")
 
   out
 }
@@ -64,7 +59,7 @@ temporal_pemob <- function(formula, data, cut, ...) {
 #' Print a temporal PEM-MOB
 #'
 #' Prints the underlying model-based recursive partitioning tree.
-print.temporalPemob <- function(x, ...) {
+print.pemtree <- function(x, ...) {
   print(x$tree, ...)
 }
 
@@ -85,7 +80,7 @@ print.temporalPemob <- function(x, ...) {
 #' @param ... Additional arguments.
 #'
 #' @return A vector containing node IDs or estimated hazards.
-predict.temporalPemob <- function(object, newdata, type = c("node", "hazard"), ...) {
+predict.pemtree <- function(object, newdata, type = c("node", "hazard"), ...) {
   type <- match.arg(type)
   checkmate::assert_data_frame(newdata)
   checkmate::assert_names(colnames(newdata), must.include = "tend")

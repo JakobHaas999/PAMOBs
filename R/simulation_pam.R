@@ -28,7 +28,6 @@
 #   n = n,
 #   formula = formula,
 #   covariate_spec = covariate_spec,
-#   baseline = baseline,
 #   cut = seq(0, 8, by = 0.05)
 # )
 # ped <- pammtools::as_ped(
@@ -73,13 +72,14 @@
 sim_pam <- function(n,
                     formula,
                     covariate_spec,
-                    baseline,
                     cut) {
   # Arguments:
   # n: Number of observations for the simulation
-  # formula: Formula that specifies the linear predictor
+  # formula:
+  #   One-sided formula specifying the log-hazard.
+  #   Functions of time and covariates are evaluated by
+  #   pammtools::sim_pexp().
   # covariate_spec: List of Specifications of covariates
-  # baseline: The log baseline hazard function
   # cut: A sequence of time-points starting with 0
 
   checkmate::assert_count(n)
@@ -93,6 +93,7 @@ sim_pam <- function(n,
     covar <- lapply(covariate_spec, function(s) {
       checkmate::assert_list(s, names = "unique")
       checkmate::assert_true("distfun" %in% names(s))
+      checkmate::assert_function(s$distfun)
 
       fun <- s$distfun
       args <- s[names(s) != "distfun"]
@@ -101,6 +102,7 @@ sim_pam <- function(n,
     })
 
     data <- as.data.frame(covar)
+    dat$id <- seq_len(n)
   } else {
     data <- data.frame(id = seq_len(n))
   }
