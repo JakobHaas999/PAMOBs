@@ -73,6 +73,7 @@ sim_pam <- function(n,
                     formula,
                     covariate_spec,
                     baseline,
+                    censoring_rate,
                     cut) {
   # Arguments:
   # n: Number of observations for the simulation
@@ -80,8 +81,9 @@ sim_pam <- function(n,
   #   One-sided formula specifying the log-hazard.
   #   Functions of time and covariates are evaluated by
   #   pammtools::sim_pexp().
-  # baseline: the log-hazard
   # covariate_spec: List of Specifications of covariates
+  # baseline: the log-hazard
+  # censoring_rate: Proportion of censored observations
   # cut: A sequence of time-points starting with 0
 
   checkmate::assert_count(n)
@@ -104,14 +106,20 @@ sim_pam <- function(n,
     })
 
     data <- as.data.frame(covar)
-    dat$id <- seq_len(n)
+    data$id <- seq_len(n)
   } else {
     data <- data.frame(id = seq_len(n))
   }
 
-  pammtools::sim_pexp(
+  sim_data <- pammtools::sim_pexp(
     formula = formula,
     data = data,
     cut = cut
+  )
+
+  censored_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
+
+  cbind.data.frame(
+    censored_data, data
   )
 }
