@@ -11,7 +11,8 @@ packages <- c(
   "sandwich",
   "checkmate",
   "ggplot2",
-  "here"
+  "here",
+  "splines"
 )
 
 # Function that checks if a package is installed and installs it if not
