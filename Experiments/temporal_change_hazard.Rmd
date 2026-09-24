@@ -7,7 +7,7 @@ output: html_document
 ## setup
 source(here::here("setup.R"))
 source(here::here("R/simulation_pem.R"))
-source(here::here("R/fit_temporal_pemob.R"))
+source(here::here("R/pemtree.R"))
 ```
 
 # Test temporal_pemob under different scenarios
@@ -27,7 +27,7 @@ validate_temporal_pemob <-function(n,
   surv_data <- sim_censoring(times, censoring_rate)
   
   ## Fit tree model
-  fit <- temporal_pemob(
+  fit <- pemtree(
     formula = Surv(time, status) ~ 1,
     data = surv_data,
     cut = seq(0, max(surv_data$time), by = ped_interval),
