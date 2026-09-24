@@ -72,6 +72,7 @@
 sim_pam <- function(n,
                     formula,
                     covariate_spec,
+                    baseline,
                     cut) {
   # Arguments:
   # n: Number of observations for the simulation
@@ -79,6 +80,7 @@ sim_pam <- function(n,
   #   One-sided formula specifying the log-hazard.
   #   Functions of time and covariates are evaluated by
   #   pammtools::sim_pexp().
+  # baseline: the log-hazard
   # covariate_spec: List of Specifications of covariates
   # cut: A sequence of time-points starting with 0
 
