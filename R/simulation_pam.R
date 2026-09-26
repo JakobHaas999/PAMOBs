@@ -88,7 +88,7 @@ sim_pam <- function(n,
   checkmate::assert_formula(formula)
   checkmate::assert_list(covariate_spec, null.ok = TRUE)
   checkmate::assert_numeric(cut, lower = 0, any.missing = FALSE)
-  checkmate::assertNumber(censoring_rate, lower = 0, upper = 1, null.ok = TRUE)
+  checkmate::assert_number(censoring_rate, lower = 0, upper = 1, null.ok = TRUE)
 
   # Generate covariates
   if (!is.null(covariate_spec)) {

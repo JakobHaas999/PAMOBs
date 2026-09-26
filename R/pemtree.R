@@ -25,7 +25,7 @@ pemtree <- function(
   cl <- match.call()
   checkmate::assert_formula(formula)
   checkmate::assert_data_frame(data)
-  checkmate::assertNumeric(cut,
+  checkmate::assert_numeric(cut,
     any.missing = FALSE,
     lower = 0
   )

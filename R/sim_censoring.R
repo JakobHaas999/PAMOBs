@@ -55,8 +55,7 @@ sim_censoring <- function(times, censoring_rate) {
 
   # asserts
   checkmate::assert_numeric(times, any.missing = FALSE, lower = .Machine$double.eps)
-  checkmate::assert_number(censoring_rate)
-  checkmate::assert_true(censoring_rate > 0 && censoring_rate < 1)
+  checkmate::assert_number(censoring_rate, null.ok = TRUE, lower = 0, upper = 1)
 
   lambda_c <- uniroot(
     f = function(lambda_c) {
