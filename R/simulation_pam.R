@@ -72,8 +72,7 @@
 sim_pam <- function(n,
                     formula,
                     covariate_spec,
-                    baseline,
-                    censoring_rate,
+                    censoring_rate = NULL,
                     cut) {
   # Arguments:
   # n: Number of observations for the simulation
@@ -82,15 +81,14 @@ sim_pam <- function(n,
   #   Functions of time and covariates are evaluated by
   #   pammtools::sim_pexp().
   # covariate_spec: List of Specifications of covariates
-  # baseline: the log-hazard
   # censoring_rate: Proportion of censored observations
   # cut: A sequence of time-points starting with 0
 
   checkmate::assert_count(n)
   checkmate::assert_formula(formula)
   checkmate::assert_list(covariate_spec, null.ok = TRUE)
-  checkmate::assert_function(baseline)
   checkmate::assert_numeric(cut, lower = 0, any.missing = FALSE)
+  checkmate::assertNumber(censoring_rate, lower = 0, upper = 1, null.ok = TRUE)
 
   # Generate covariates
   if (!is.null(covariate_spec)) {
@@ -117,9 +115,13 @@ sim_pam <- function(n,
     cut = cut
   )
 
-  censored_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
+  if (!is.null(censoring_rate)) {
+    surv_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
+  } else {
+    surv_data <- data.frame(time = sim_data$time, status = rep(1L, n))
+  }
 
   cbind.data.frame(
-    censored_data, data
+    surv_data, data
   )
 }

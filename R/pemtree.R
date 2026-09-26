@@ -1,123 +1,87 @@
-#' Fit a temporal PEM-MOB
-#'
-#' Transforms survival data into piecewise exponential data (PED) and fits
-#' a model-based recursive partitioning tree using time (`tend`) as the
-#' partitioning variable. Within each node, a Poisson model corresponding
-#' to a piecewise exponential model is fitted.
-#'
-#' @param formula Survival formula of the form Surv(time, status) ~ covariates.
-#' @param data Data frame containing survival outcome and covariates.
-#' @param cut Cut points used for the PED transformation.
-#' @param ... Additional arguments passed to partykit::glmtree().
-#'
-#' @return An object of class "pemtree".
-pemtree <- function(formula, data, cut, ...) {
+# Fit a Piecewise Exponential Model Tree
+#
+# This function combines piecewise exponential models (PEMs) with
+# model-based recursive partitioning. The supplied survival data are first
+# transformed into piecewise exponential data (PED). A Poisson GLM tree is
+# then fitted to the PED representation using `partykit::glmtree()`.
+#
+# The formula follows the model-based recursive partitioning structure
+#
+#   Surv(time, status) ~ model terms | partitioning variables
+#
+# where the terms on the left-hand side of `|` define the node-specific
+# PEM and the variables on the right-hand side define potential splitting
+# variables.
+#
+# The fitted tree, PED representation, model formulas, cut points, and
+# additional information required for subsequent methods are stored in
+# an object of class "pemtree".
+pemtree <- function(
+  formula,
+  data,
+  cut,
+  ...
+) {
+  cl <- match.call()
   checkmate::assert_formula(formula)
   checkmate::assert_data_frame(data)
-  checkmate::assert_numeric(cut, any.missing = FALSE)
+  checkmate::assertNumeric(cut,
+    any.missing = FALSE,
+    lower = 0
+  )
 
-  covariates <- attr(terms(formula), "term.labels")
+  # construct as_ped formula
+  f <- Formula::Formula(formula)
+  data_vars <- intersect(all.vars(f), colnames(data))
+  response <- f[[2]]
+  vars_ped <- setdiff(data_vars, all.vars(response))
+  ped_formula <- reformulate(
+    termlabels = vars_ped,
+    response = deparse(response)
+  )
 
-  # Transform survival data into piecewise exponential data
+  # transform to PED data
   ped <- pammtools::as_ped(
-    formula = formula,
+    formula = ped_formula,
     data = data,
     cut = cut
   )
 
-  # Use the original covariates in the node model and time as the
-  # partitioning variable. Without covariates, fit an intercept-only model.
-  tree_formula <- if (length(covariates)) {
-    as.formula(paste0(
-      "ped_status ~ ",
-      paste(covariates, collapse = " + "),
-      " + offset(offset) | tend"
-    ))
-  } else {
-    ped_status ~ 1 + offset(offset) | tend
-  }
-
-  fit <- partykit::glmtree(
-    formula = tree_formula,
-    family = poisson(link = "log"),
+  # construct MOB formula
+  mob_formula <- update(f, ped_status ~ .)
+  tree <- partykit::glmtree(
+    formula = mob_formula,
     data = ped,
+    family = poisson(link = "log"),
     ...
   )
 
-  out <- structure(list(
-    tree = fit,
+  structure(list(
+    tree = tree,
     formula = formula,
-    tree_formula = tree_formula,
-    data = data,
+    mob_formula = mob_formula,
+    ped_formula = ped_formula,
     ped = ped,
-    cut = cut
+    nobs = nrow(data),
+    nobs_ped = nrow(ped),
+    cut = cut,
+    call = cl
   ), class = "pemtree")
-
-  out
 }
 
-#' Print a temporal PEM-MOB
-#'
-#' Prints the underlying model-based recursive partitioning tree.
+# Print a Piecewise Exponential Model Tree
+#
+# Prints a compact representation of a fitted "pemtree" object, including
+# the original function call and the underlying generalized linear model
+# tree.
 print.pemtree <- function(x, ...) {
+  cat("Piecewise Exponential Model Tree\n\n")
+
+  cat("Call:\n")
+  print(x$call)
+
+  cat("\nFitted tree:\n")
   print(x$tree, ...)
-}
 
-
-#' Predict from a temporal PEM-MOB
-
-#'
-
-#' Assigns each row of `newdata` to a terminal node of the fitted tree.
-#' Predictions can either return the corresponding node ID or the estimated
-#' hazard. Hazard predictions are obtained from the node-specific Poisson
-#' model with an offset of zero, corresponding to unit exposure time.
-#'
-#' @param object A fitted "temporalPemob" object.
-#' @param newdata Data frame containing `tend` and all covariates required
-#'   by the fitted node model.
-#' @param type Either "node" or "hazard".
-#' @param ... Additional arguments.
-#'
-#' @return A vector containing node IDs or estimated hazards.
-predict.pemtree <- function(object, newdata, type = c("node", "hazard"), ...) {
-  type <- match.arg(type)
-  checkmate::assert_data_frame(newdata)
-  checkmate::assert_names(colnames(newdata), must.include = "tend")
-
-  nodes <- predict(
-    object$tree,
-    newdata = newdata,
-    type = "node"
-  )
-  if (type == "node") {
-    return(nodes)
-  }
-
-  terminal_nodes <- partykit::nodeids(object$tree, terminal = TRUE)
-  node_models <- partykit::nodeapply(
-    object$tree,
-    ids = terminal_nodes,
-    FUN = function(node) node$info$object
-  )
-  names(node_models) <- terminal_nodes
-
-  # Hazard predictions
-  hazard <- numeric(nrow(newdata))
-
-  for (node_id in terminal_nodes) {
-    idx <- nodes == node_id
-    if (!any(idx)) next
-    mod <- node_models[[as.character(node_id)]]
-    node_data <- newdata[idx, , drop = FALSE]
-    node_data$offset <- 0
-    hazard[idx] <- predict(
-      mod,
-      newdata = node_data,
-      type = "response",
-      ...
-    )
-  }
-
-  unname(hazard)
+  invisible(x)
 }
