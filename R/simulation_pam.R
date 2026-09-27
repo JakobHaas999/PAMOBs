@@ -1,3 +1,5 @@
+source("R/sim_pexp_own.R")
+source("R/sim_censoring.R")
 ### Function to simulate from a pam
 #
 # # Example call:
@@ -109,16 +111,19 @@ sim_pam <- function(n,
     data <- data.frame(id = seq_len(n))
   }
 
-  sim_data <- pammtools::sim_pexp(
+  sim_data <- sim_pexp_own(
     formula = formula,
     data = data,
     cut = cut
   )
 
-  if (!is.null(censoring_rate)) {
-    surv_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
+  if (is.null(censoring_rate) || censoring_rate == 0) {
+    surv_data <- data.frame(
+      time = sim_data$time,
+      status = sim_data$status
+    )
   } else {
-    surv_data <- data.frame(time = sim_data$time, status = rep(1L, n))
+    surv_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
   }
 
   cbind.data.frame(
