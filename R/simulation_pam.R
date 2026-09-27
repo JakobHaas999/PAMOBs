@@ -1,5 +1,3 @@
-source("R/sim_pexp_own.R")
-source("R/sim_censoring.R")
 ### Function to simulate from a pam
 #
 # # Example call:
