@@ -81,7 +81,7 @@ sim_pam <- function(n,
   # formula:
   #   One-sided formula specifying the log-hazard.
   #   Functions of time and covariates are evaluated by
-  #   pammtools::sim_pexp().
+  #   sim_pexp_own().
   # covariate_spec: List of Specifications of covariates
   # censoring_rate: Proportion of censored observations
   # cut: A sequence of time-points starting with 0

@@ -3,7 +3,7 @@
 # The log-baseline hazard is piecewise constant with a
 # single structural change at tau:
 #
-# log(lambda(t)) = beta0 + delta * I(t > tau)
+# log(lambda(t)) = beta0 + delta * I(t >= tau)
 #
 # delta = 0 corresponds to the null scenario without parameter instability
 
@@ -15,7 +15,7 @@ scenario_level_shift <- function(
   censoring_rate = NULL
 ) {
   log_hazard <- function(t) {
-    beta0 + delta * ifelse(t > tau, delta, 0)
+    beta0 + delta * (t >= tau)
   }
 
   sim_pam(
@@ -23,6 +23,6 @@ scenario_level_shift <- function(
     formula = ~ log_hazard(t),
     covariate_spec = NULL,
     censoring_rate = censoring_rate,
-    cut = seq(0, 8, by = 0.1)
+    cut = seq(0, 10, by = 0.1)
   )
 }
