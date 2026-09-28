@@ -21,6 +21,9 @@ run_one_level_shift <- function(
   alpha = 0.05
 ) {
   cat(sprintf("\nRepetition %s\n", rep))
+  cat("Parameters:\n")
+  cat("n = ", n, "delta = ", delta, "censoring rate = ", censoring_rate, "seed = ", seed)
+
   start_time <- proc.time()[["elapsed"]]
 
   result <- tryCatch(
@@ -74,7 +77,11 @@ run_one_level_shift <- function(
     )
 
     runtime <- proc.time()[["elapsed"]] - start_time
-    split_detected <- !is.na(result$tau_hat)
+    split_detected <- if(result$success) {
+      !is.na(result$tau_hat)
+    } else {
+      NA
+    }
 
     data.frame(
       scenario = "level_shift",
@@ -88,7 +95,7 @@ run_one_level_shift <- function(
       success = result$success,
       split_detected = split_detected,
       tau_hat = result$tau_hat,
-      tau_error = if (split_detected && delta != 0) {
+      tau_error = if (isTRUE(split_detected) && delta != 0) {
         abs(result$tau_hat - tau)
       } else {
         NA_real_
@@ -97,6 +104,7 @@ run_one_level_shift <- function(
       observed_censoring = result$observed_censoring,
       runtime_sec = runtime,
       error = result$error,
+      ped_interval,
       alpha = alpha
     )
 }
