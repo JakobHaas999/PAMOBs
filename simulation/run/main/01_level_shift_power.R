@@ -24,7 +24,7 @@ output_dir <- file.path("simulation/results/main/", run_id, "blocks")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 design <- expand.grid(
-  n = c(500, 1000, 10000),
+  n = c(500, 1000),
   delta = c(0.25, 0.5, 0.75, 1),
   tau = 4,
   beta0 = -2,
