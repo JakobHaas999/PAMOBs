@@ -39,7 +39,7 @@ design$design_id <- seq_len(nrow(design))
 design$block_id <- ceiling(design$design_id / block_size)
 
 design_file <- file.path("simulation/results/main", run_id, "design.rds")
-if (file.exists(design)) {
+if (file.exists(design_file)) {
   saved_design <- readRDS(design_file)
   if (!identical(design, saved_design)) {
     stop("Current design differs from saved design")
@@ -81,5 +81,4 @@ for (block in sort(unique(design$block_id))) {
     stop("Could not finalize block ", block)
   }
 }
-
 
