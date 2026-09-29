@@ -15,7 +15,7 @@ source("simulation/R/run_one.R")
 ## simulation scenario
 source("simulation/scenarios/01_level_shift.R")
 
-run_id <- "level_shift_null_v1"
+run_id <- "level_shift_null_robust_v1"
 block_size <- 50
 
 output_dir <- file.path("simulation/results/main", run_id, "blocks")
@@ -30,6 +30,7 @@ design <- expand.grid(
   censoring_rate = c(0.3, 0.5, 0.7),
   rep = seq_len(500),
   ped_interval = 0.1,
+  min_events = 10,
   alpha = 0.05,
   KEEP.OUT.ATTRS = FALSE
 )
