@@ -18,6 +18,7 @@ run_one_level_shift <- function(
   rep,
   seed,
   ped_interval = 0.1,
+  min_events = 10,
   alpha = 0.05
 ) {
   cat(sprintf("\nRepetition %s\n", rep))
@@ -49,6 +50,7 @@ run_one_level_shift <- function(
         fit <- fit_temporal_pemtree(
           data = data,
           cut = ped_cut,
+          min_events = min_events,
           maxdepth = 2,
           alpha = alpha
         )
@@ -105,6 +107,7 @@ run_one_level_shift <- function(
       runtime_sec = runtime,
       error = result$error,
       ped_interval,
+      min_events = min_events,
       alpha = alpha
     )
 }
