@@ -56,3 +56,5 @@ rsconnect/
 
 # Simulation results
 simulation/results/
+# Thesis plots
+thesis_plots
