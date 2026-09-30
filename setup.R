@@ -12,7 +12,9 @@ packages <- c(
   "checkmate",
   "ggplot2",
   "here",
-  "splines"
+  "splines",
+  "data.table",
+  "Formula"
 )
 
 # Function that checks if a package is installed and installs it if not
