@@ -3,7 +3,7 @@ source("setup.R")
 
 ## functions
 source("R/pemtree.R")
-source("R/sim_pexp_own.R")
+source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 
@@ -82,4 +82,3 @@ for (block in sort(unique(design$block_id))) {
     stop("Could not finalize block ", block)
   }
 }
-

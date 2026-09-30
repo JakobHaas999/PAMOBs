@@ -4,7 +4,7 @@ source("setup.R")
 
 ## functions
 source("R/pemtree.R")
-source("R/sim_pexp_own.R")
+source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 
@@ -71,4 +71,3 @@ saveRDS(
   object = results,
   file = "simulation/results/pilot/01_level_shift_raw.rds"
 )
-

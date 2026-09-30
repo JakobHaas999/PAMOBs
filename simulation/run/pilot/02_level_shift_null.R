@@ -4,7 +4,7 @@ source("setup.R")
 
 ## functions
 source("R/pemtree.R")
-source("R/sim_pexp_own.R")
+source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 
@@ -41,7 +41,7 @@ results <- do.call(
 
 ## Summary statistics
 split_rate <- mean(results$split_detected[results$success])
-mcse = sqrt(split_rate * (1 - split_rate) / sum(results$success))
+mcse <- sqrt(split_rate * (1 - split_rate) / sum(results$success))
 c(
   n_errors = sum(!results$success),
   split_rate = split_rate,

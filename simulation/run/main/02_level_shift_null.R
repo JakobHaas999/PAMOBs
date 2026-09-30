@@ -3,7 +3,7 @@
 source("setup.R")
 
 ## functions
-source("R/sim_pexp_own.R")
+source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("R/pemtree.R")

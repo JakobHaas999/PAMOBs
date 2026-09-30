@@ -79,7 +79,7 @@ sim_pam <- function(n,
   # formula:
   #   One-sided formula specifying the log-hazard.
   #   Functions of time and covariates are evaluated by
-  #   sim_pexp_own().
+  #   sim_pexponetial().
   # covariate_spec: List of Specifications of covariates
   # censoring_rate: Proportion of censored observations
   # cut: A sequence of time-points starting with 0
@@ -109,7 +109,7 @@ sim_pam <- function(n,
     data <- data.frame(id = seq_len(n))
   }
 
-  sim_data <- sim_pexp_own(
+  sim_data <- sim_pexponential(
     formula = formula,
     data = data,
     cut = cut
