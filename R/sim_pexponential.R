@@ -32,7 +32,10 @@ sim_pexponential <- function(formula, data, cut) {
   ped[["rate"]] <- exp(eta)
   ped <- data.table::as.data.table(ped)
 
-  sim_data <- ped[, .(time = pammtools:::rpexp(rate = rate, t = t), status = 1L), by = id]
+  sim_data <- suppressMessages(ped[, .(
+    time = pammtools:::rpexp(rate = rate, t = t),
+    status = 1L
+  ), by = id])
   sim_data <- data[, !c("time", "status")][sim_data, on = "id"]
   as.data.frame(sim_data)
 }
