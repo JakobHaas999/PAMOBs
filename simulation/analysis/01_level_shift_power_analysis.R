@@ -29,7 +29,7 @@ results_summary <- results[
     cond_rmse_tau = sqrt(mean((tau_hat - tau)^2, na.rm = TRUE))
   ),
   by = c("delta", "n", "censoring_rate")
-][, mcse_power := power * (1 - power) / n_sim][]
+][, mcse_power := sqrt(power * (1 - power) / n_sim)][]
 
 
 # Power summary table
