@@ -29,12 +29,13 @@ sim_data <- sim_pam(
   formula = formula,
   covariate_spec = NULL,
   censoring_rate = censoring_rate,
+  admin_time = max(cut),
   cut = cut
 )
 
 ## Fit the temporal PEM tree
 fit_cut <- unique(c(seq(0, max(sim_data$time), by = 0.1), max(sim_data$time)))
-tree_fit <- pemtree(
+tree_fit <- pemtree_splines(
   formula = Surv(time, status) ~ poly(tend, 2, raw = TRUE) + offset(offset) |
     tend,
   data = sim_data,
