@@ -73,6 +73,7 @@ sim_pam <- function(n,
                     formula,
                     covariate_spec,
                     censoring_rate = NULL,
+                    admin_time = NULL,
                     cut) {
   # Arguments:
   # n: Number of observations for the simulation
@@ -89,6 +90,10 @@ sim_pam <- function(n,
   checkmate::assert_list(covariate_spec, null.ok = TRUE)
   checkmate::assert_numeric(cut, lower = 0, any.missing = FALSE)
   checkmate::assert_number(censoring_rate, lower = 0, upper = 1, null.ok = TRUE)
+  checkmate::assert_number(admin_time, lower = 0, null.ok = TRUE)
+  if (!is.null(admin_time) && admin_time > max(cut)) {
+    stop("admin_time must not exceed max(cut)")
+  }
 
   # Generate covariates
   if (!is.null(covariate_spec)) {
@@ -122,6 +127,22 @@ sim_pam <- function(n,
     )
   } else {
     surv_data <- sim_censoring(sim_data$time, censoring_rate = censoring_rate)
+  }
+
+  if (!is.null(admin_time)) {
+    censoring_reason <- ifelse(
+      surv_data$time > admin_time,
+      "administrative",
+      ifelse(
+        surv_data$status == 0,
+        "random",
+        "event"
+      )
+    )
+
+    surv_data$time <- pmin(surv_data$time, admin_time)
+    surv_data$status <- as.integer(censoring_reason == "event")
+    surv_data$censoring_reason <- censoring_reason
   }
 
   cbind.data.frame(
