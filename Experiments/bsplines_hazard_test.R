@@ -83,45 +83,74 @@ ggplot(newdata, aes(x = tend)) +
   labs(x = "t", y = expression(lambda(t))) +
   theme_bw()
 
-## Data-generating process 2
-log_hazard <- function(t, tau = 6) {
-  ifelse(
-    t < tau,
-    -3 + 2 * dgamma(t, shape = 8, rate = 2),
-    -1.5
-  )
+## Data-generating process 1
+log_hazard <- function(t, tau = c(3, 6)) {
+  -3 + 2 * dgamma(t, shape = 8, rate = 2) +
+    1.4 * (t >= tau[1] & t < tau[2]) + 0.6 * (t >= tau[2])
 }
+
 # Plot baseline hazard
 t_vals <- seq(0, 10, by = 0.01)
-plot(t_vals, exp(log_hazard(t_vals, tau = 6)),
+plot(t_vals, exp(log_hazard(t_vals)),
   type = "l",
   xlab = "t", ylab = expression(lambda(t))
 )
 
-covariate_spec <- list(x1 = list(distfun = runif, min = 0, max = 4))
-formula <- ~ log_hazard(t, tau = 6) + sqrt(x1)
+# Simulate data
+n <- 3000
+formula <- ~ log_hazard(t)
 cut <- seq(0, 10, by = 0.1)
-n <- 2000
 
-set.seed(1111)
+set.seed(129)
 sim_data <- sim_pam(
   n = n,
   formula = formula,
-  covariate_spec = covariate_spec,
+  covariate_spec = NULL,
   censoring_rate = 0.2,
   admin_time = 10,
   cut = cut
 )
 
-# Fit the tree
+# Fit tree
 tree_fit <- pemtree_splines(
-  formula = Surv(time, status) ~ bs(tend, df = 5, degree = 3) + bs(x1, df = 5, degree = 3) +
-    offset(offset) | tend,
+  formula = Surv(time, status) ~ bs(tend, df = 5, degree = 3) + offset(offset) | tend,
   data = sim_data,
   cut = cut,
   min_events = 30,
-  maxdepth = 2,
+  maxdepth = 3,
   alpha = 0.05
 )
 
 tree_fit$tree
+
+## Reconstruct node-specific hazard estimate
+tree <- tree_fit$tree
+terminal_ids <- nodeids(tree, terminal = TRUE)
+node_models <- nodeapply(
+  tree,
+  ids = terminal_ids,
+  FUN = function(node) info_node(node)$object
+)
+
+newdata <- data.frame(
+  tend = seq(min(sim_data$time), max(sim_data$time), length.out = 500),
+  offset = 0
+)
+newdata$node_id <- predict(tree, newdata = newdata, type = "node")
+newdata$hazard_hat <- NA_real_
+
+for (j in seq_along(terminal_ids)) {
+  rows <- newdata$node_id == terminal_ids[j]
+  newdata$hazard_hat[rows] <- predict(
+    node_models[[j]],
+    newdata = newdata[rows, ],
+    type = "response"
+  )
+}
+newdata$hazard_true <- exp(log_hazard(newdata$tend))
+
+ggplot(newdata, aes(x = tend)) +
+  geom_line(aes(y = hazard_hat, linetype = "Estimate")) +
+  geom_line(aes(y = hazard_true, linetype = "True")) +
+  labs(x = "t", y = expression(lambda(t)), linetype = NULL) +
+  theme_bw()

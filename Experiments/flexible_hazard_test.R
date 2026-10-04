@@ -1,7 +1,7 @@
 ### setup
 source("setup.R")
 ## Load required functions
-source("R/pemtree.R")
+source("R/pemtree_splines.R")
 source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
