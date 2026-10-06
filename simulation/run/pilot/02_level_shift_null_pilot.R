@@ -60,4 +60,4 @@ setDT(results)
 results[success == TRUE, .(
   alpha_hat = mean(split_detected),
   mcse = sqrt(mean(split_detected) * (1 - mean(split_detected)) / .N)
-)]
+), by = "scenario"]
