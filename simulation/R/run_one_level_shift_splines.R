@@ -59,7 +59,7 @@ run_one_level_shift_splines <- function(
 
       if (covariate_setting == "none") {
         if (!is.null(covariate_spec) || !is.null(covariate_effects)) {
-          stop("NO covariates may be supplied for covariate_setting = 'none'")
+          stop("No covariates may be supplied for covariate_setting = 'none'")
         }
       } else {
         if (is.null(covariate_spec) || is.null(covariate_effects)) {
