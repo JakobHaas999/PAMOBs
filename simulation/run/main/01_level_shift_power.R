@@ -1,22 +1,20 @@
-### source relevant files
+### setup
+# packages
 source("setup.R")
-
-## functions
-source("R/pemtree.R")
+# functions
 source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
-
-## simulation helpers
-source("simulation/R/fit_models.R")
-source("simulation/R/run_one.R")
-
-## simulation scenario
+source("R/pemtree.R")
+source("R/pemtree_splines.R")
+# simulation helpers
+source("simulation/R/pemtree_helpers.R")
+source("simulation/R/run_one_level_shift.R")
 source("simulation/scenarios/01_level_shift.R")
 
 
 
-run_id <- "level_shift_power_robust_v1"
+run_id <- "level_shift_power_constant_v1"
 block_size <- 50
 
 output_dir <- file.path("simulation/results/main/", run_id, "blocks")
@@ -24,18 +22,29 @@ output_dir <- file.path("simulation/results/main/", run_id, "blocks")
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 
 design <- expand.grid(
-  n = c(500, 1000),
-  delta = c(0.25, 0.5, 0.75, 1),
-  tau = 4,
+  n = c(500, 1000, 1500),
+  delta = c(0.2, 0.4, 0.6, 0.8, 1),
+  tau = 5,
   beta0 = -2,
-  censoring_rate = c(0.3, 0.5, 0.7),
+  covariate_setting = c("none", "included"),
+  censoring_rate = c(0.2, 0.4, 0.6),
   rep = seq_len(500),
+  admin_time = 10,
+  sim_interval = 0.05,
   ped_interval = 0.1,
   alpha = 0.05,
-  min_events = 10,
+  min_events = 25,
   KEEP.OUT.ATTRS = FALSE
 )
 design$seed <- 33 + seq_len(nrow(design))
+
+covariate_spec <- list(
+  x1 = list(distfun = rnorm, mean = 0, sd = 1),
+  x2 = list(distfun = runif, min = -1, max = 1),
+  x3 = list(distfun = rbinom, size = 1, prob = 0.5)
+)
+covariate_effects <- c(x1 = 0.3, x2 = 0.2, x3 = 0.5)
+
 design$design_id <- seq_len(nrow(design))
 design$block_id <- ceiling(design$design_id / block_size)
 
@@ -64,10 +73,13 @@ for (block in sort(unique(design$block_id))) {
   block_results <- do.call(
     rbind,
     lapply(rows, function(i) {
-      do.call(
-        run_one_level_shift,
-        as.list(design[i, arg_names, drop = FALSE])
-      )
+      args <- as.list(design[i, arg_names, drop = FALSE])
+      if (args$covariate_setting == "included") {
+        args$covariate_spec <- covariate_spec
+        args$covariate_effects <- covariate_effects
+      }
+
+      do.call(run_one_level_shift, args)
     })
   )
 
