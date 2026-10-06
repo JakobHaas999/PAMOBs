@@ -28,6 +28,7 @@ run_one_level_shift <- function(
   censoring_rate,
   rep,
   seed,
+  admin_time = 10,
   ped_interval = 0.1,
   min_events = 10,
   alpha = 0.05
