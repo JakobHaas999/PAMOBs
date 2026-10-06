@@ -44,11 +44,6 @@ run_one_level_shift <- function(
   result <- tryCatch(
     {
       set.seed(seed)
-      censoring_argument <- if (is.null(censoring_rate) || censoring_rate == 0) {
-        NULL
-      } else {
-        censoring_rate
-      }
 
       if (covariate_setting == "none") {
         if (!is.null(covariate_spec) || !is.null(covariate_effects)) {
