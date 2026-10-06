@@ -1,5 +1,10 @@
 source("setup.R")
+source("R/sim_pexponential.R")
+source("R/sim_censoring.R")
+source("R/simulation_pam.R")
 source("simulation/scenarios/01_level_shift.R")
+
+
 tau <- 4
 beta0 <- -2
 delta <- 1
