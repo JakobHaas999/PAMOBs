@@ -9,6 +9,7 @@ source("R/pemtree.R")
 source("R/pemtree_splines.R")
 # simulation helpers
 source("simulation/scenarios/01_level_shift.R")
+source("simulation/R/pemtree_helpers.R")
 source("simulation/R/run_one_level_shift.R")
 
 run_id <- "level_shift_null_constant_v1"

@@ -1,29 +1,3 @@
-construct_tree_formula <- function(covariate_spec, df) {
-  model_terms <- c(
-    sprintf("bs(tend, degree = 3, df = %s)", df),
-    names(covariate_spec),
-    "offset(offset)"
-  )
-
-  as.formula(
-    paste(
-      "Surv(time, status) ~",
-      paste(model_terms, collapse = " + "),
-      "| tend"
-    ),
-    env = parent.frame()
-  )
-}
-
-extract_time_split <- function(fit) {
-  root <- node_party(fit$tree)
-  split <- split_node(root)
-  if (is.null(split)) {
-    return(NA_real_)
-  }
-  breaks_split(split)[[1]]
-}
-
 run_one_level_shift_splines <- function(
   n,
   delta,
@@ -82,7 +56,8 @@ run_one_level_shift_splines <- function(
       )
 
       tree_formula <- construct_tree_formula(
-        covariate_spec = covariate_spec, df = df
+        covariate_spec = covariate_spec,
+        baseline_terms = sprintf("bs(tend, degree = 3, df = %s)", df)
       )
 
       fit_cut <- sort(unique(c(

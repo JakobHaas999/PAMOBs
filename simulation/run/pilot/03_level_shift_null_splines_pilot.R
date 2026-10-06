@@ -8,6 +8,7 @@ source("R/simulation_pam.R")
 source("R/pemtree.R")
 source("R/pemtree_splines.R")
 # simulation helpers
+source("simulation/R/pemtree_helpers.R")
 source("simulation/R/run_one_level_shift_splines.R")
 source("simulation/scenarios/02_level_shift_splines.R")
 
