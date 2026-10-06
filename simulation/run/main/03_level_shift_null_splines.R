@@ -26,6 +26,7 @@ design <- expand.grid(
   censoring_rate = c(0.2, 0.4, 0.6),
   rep = seq_len(1000),
   admin_time = 10,
+  sim_interval = 0.05,
   ped_interval = 0.1,
   min_events = 25,
   alpha = 0.05,

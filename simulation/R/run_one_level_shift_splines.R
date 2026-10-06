@@ -37,6 +37,7 @@ run_one_level_shift_splines <- function(
   rep,
   seed,
   admin_time,
+  sim_interval = 0.05,
   ped_interval = 0.1,
   min_events = 25,
   alpha = 0.05
@@ -77,7 +78,7 @@ run_one_level_shift_splines <- function(
         covariate_spec = covariate_spec,
         covariate_effects = covariate_effects,
         admin_time = admin_time,
-        sim_interval = ped_interval
+        sim_interval = sim_interval
       )
 
       tree_formula <- construct_tree_formula(
@@ -144,6 +145,7 @@ run_one_level_shift_splines <- function(
     runtime_sec = runtime,
     error = result$error,
     admin_time = admin_time,
+    sim_interval = sim_interval,
     ped_interval = ped_interval,
     min_events = min_events,
     alpha = alpha
