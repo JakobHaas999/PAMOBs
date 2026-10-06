@@ -100,6 +100,22 @@ for (i in seq_len(n_sim)) {
   results$error[i] <- result$error
 }
 
+alpha_hat <- mean(results$split[results$success])
+mcse <- sqrt(alpha_hat * (1 - alpha_hat) / sum(results$success))
+test <- binom.test(
+  sum(results$split[results$success]),
+  sum(results$success),
+  p = 0.05
+)
+ci_lower <- test$conf.int[1]
+ci_upper <- test$conf.int[2]
+c(
+  alpha_hat = alpha_hat,
+  mcse = mcse,
+  ci_lower = ci_lower,
+  ci_upper = ci_upper
+)
+
 
 # --- Scenario 2:  Flexible baseline hazard function -------------------------------
 # ----------------------------------------------------------------------------------
@@ -187,3 +203,19 @@ for (i in seq_len(n_sim)) {
   results_splines$split[i] <- result$split
   results_splines$error[i] <- result$error
 }
+
+alpha_hat_splines <- mean(results_splines$split[results_splines$success])
+mcse_splines <- sqrt(alpha_hat_splines * (1 - alpha_hat_splines) / sum(results_splines$success))
+test_splines <- binom.test(
+  x = sum(results_splines$split[results_splines$success]),
+  n = sum(results_splines$success),
+  p = 0.05
+)
+ci_lower_splines <- test_splines$conf.int[1]
+ci_upper_splines <- test_splines$conf.int[2]
+c(
+  alpha_hat = alpha_hat_splines,
+  mcse = mcse_splines,
+  ci_lower = ci_lower_splines,
+  ci_upper = ci_upper_splines
+)
