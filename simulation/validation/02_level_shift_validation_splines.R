@@ -2,6 +2,17 @@ source("setup.R")
 source("simulation/scenarios/02_level_shift_splines.R")
 
 ## Global parameters
+source("R/sim_pexponential.R")
+source("R/sim_censoring.R")
+source("R/simulation_pam.R")
+
+basehaz <- function(t) {
+  -2.5 + 0.25 * t - 0.025 * t^2
+}
+delta <- 0.8
+tau <- 4
+censoring_rate <- 0.2
+admin_time <- 10
 
 ## Without covariates -----------------------------------------------------------
 
@@ -29,9 +40,9 @@ fit <- glm(
 )
 
 # Compare prediction with true hazard
-newdata <- data.frame(tend = seq(0, max(dat$time), length.out = 500), offset = 0)
+newdata <- data.frame(tend = seq(min(ped$tend), max(ped$tend), length.out = 500), offset = 0)
 newdata$hazard_hat <- predict(fit, newdata = newdata, type = "response")
-newdata$hazard_true <- exp(basehaz(newdata$tend))
+newdata$hazard_true <- exp(basehaz(newdata$tend) + delta * (newdata$tend >= tau))
 
 ggplot(newdata, aes(x = tend)) +
   geom_line(aes(y = hazard_hat, linetype = "Estimate")) +
@@ -85,11 +96,11 @@ fit <- glm(
 
 # Compute prediction with true hazard
 newdata <- data.frame(
-  tend = seq(0, max(dat$time), length.out = 500),
+  tend = seq(min(ped$tend), max(ped$tend), length.out = 500),
   offset = 0, x1 = 0, x2 = 0, x3 = 0
 )
 newdata$hazard_hat <- predict(fit, newdata = newdata, type = "response")
-newdata$hazard_true <- exp(basehaz(newdata$tend))
+newdata$hazard_true <- exp(basehaz(newdata$tend) + delta * (newdata$tend >= tau))
 
 ggplot(newdata, aes(x = tend)) +
   geom_line(aes(y = hazard_hat, linetype = "Estimate")) +
