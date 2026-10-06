@@ -1,3 +1,4 @@
+source("setup.R")
 source("simulation/scenarios/01_level_shift.R")
 tau <- 4
 beta0 <- -2
