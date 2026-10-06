@@ -34,7 +34,8 @@ design <- expand.grid(
   ped_interval = 0.1,
   alpha = 0.05,
   min_events = 25,
-  KEEP.OUT.ATTRS = FALSE
+  KEEP.OUT.ATTRS = FALSE,
+  stringsAsFactors = FALSE
 )
 design$seed <- 33 + seq_len(nrow(design))
 
