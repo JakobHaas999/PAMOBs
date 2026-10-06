@@ -80,7 +80,9 @@ pemtree_splines <- function(
       ))
 
       design <- fit$x
-      if (fit$rank < ncol(design)) {
+      if (!isTRUE(fit$converged) ||
+        fit$rank < ncol(design) ||
+        any(!is.finite(coef(fit)))) {
         return(invalid_fit(design))
       }
 
