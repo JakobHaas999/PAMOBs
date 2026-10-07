@@ -4,54 +4,100 @@ source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("simulation/scenarios/01_level_shift.R")
 
+# Parameters ------------------------------------------------------------------
 
-tau <- 4
+n_validation <- 10000
+tau <- 5
+admin_time <- 10
+interval <- 0.05
+censoring_rate <- 0.4
+covariate_spec <- list(
+  x1 = list(distfun = rnorm, mean = 0, sd = 1),
+  x2 = list(distfun = runif, min = -1, max = 1),
+  x3 = list(distfun = rbinom, size = 1, prob = 0.5)
+)
+covariate_effects <- c(x1 = 0.3, x2 = 0.2, x3 = 0.5)
+
+validation_design <- expand.grid(
+  delta = c(0, 0.8),
+  covariate_setting = c("none", "included"),
+  stringsAsFactors = FALSE
+)
+validation_design$seed <- 9000 + seq_len(nrow(validation_design))
+
 beta0 <- -2
-delta <- 1
 
-log_hazard <- function(t) {
-  beta0 + delta * (t > tau)
+simulate <- function(delta, spec, effects) {
+  scenario_level_shift(
+    n = n_validation, delta = delta, tau = tau, beta0 = beta0,
+    censoring_rate = censoring_rate, covariate_spec = spec,
+    covariate_effects = effects, admin_time = admin_time,
+    sim_interval = interval
+  )
 }
-t_grid <- seq(0, 8, by = 0.01)
 
-## Simulate data
-set.seed(123)
-dat <- scenario_level_shift(
-  n = 10000,
-  delta = delta,
-  tau = tau,
-  beta0 = beta0
-)
+baseline_truth <- c("(Intercept)" = beta0)
+true_hazard <- function(t, delta) exp(beta0 + delta * I(t >= tau))
+cut <- sort(unique(c(seq(0, admin_time, by = interval), tau, admin_time)))
 
-ped <- as_ped(
-  formula = Surv(time, status) ~ 1,
-  data = dat,
-  cut = seq(0, 8, by = 0.1)
-)
+# Validation ------------------------------------------------------------------
 
-fit <- glm(
-  ped_status ~ interval + offset(offset),
-  family = poisson(link = "log"),
-  data = ped
-)
+validation_01 <- rbindlist(lapply(seq_len(nrow(validation_design)), function(i) {
+  cfg <- validation_design[i, , drop = FALSE]
+  included <- cfg$covariate_setting == "included"
+  spec <- if (included) covariate_spec else NULL
+  effects <- if (included) covariate_effects else NULL
+  covariates <- if (included) names(effects) else character()
 
+  set.seed(cfg$seed)
+  dat <- simulate(cfg$delta, spec, effects)
 
-## Compare prediction with truth
-# Prediction data for all intervalls
-newdata <- data.frame(interval = levels(ped$interval), offset = 0)
-hazard_hat <- predict(fit, newdata = newdata, type = "response")
-interval_info <- unique(ped[, c("interval", "tend")])
-interval_info <- interval_info[
-  match(levels(ped$interval), interval_info$interval),
-]
-interval_info$hazard_hat <- hazard_hat
-interval_info$hazard_true <- exp(log_hazard(interval_info$tend))
-head(interval_info)
+  ped <- pammtools::as_ped(
+    reformulate(covariates, response = "Surv(time, status)"),
+    data = dat,
+    cut = cut
+  )
 
-## Plot prediction and truth
-ggplot(interval_info, aes(x = tend)) +
-  geom_step(aes(y = hazard_hat, col = "estimate")) +
-  geom_step(aes(y = hazard_true, col = "truth")) +
-  ylab(expression(lambda(t))) +
-  xlab("t") +
-  theme_bw()
+  ped$post_tau <- as.integer(ped$tstart >= tau)
+
+  fit <- glm(
+    reformulate(
+      c("post_tau", covariates, "offset(offset)"),
+      response = "ped_status"
+    ),
+    family = poisson(link = "log"),
+    data = ped
+  )
+
+  truth <- c(baseline_truth, post_tau = cfg$delta, effects)
+  estimates <- coef(summary(fit))
+  stopifnot(all(names(truth) %in% rownames(estimates)))
+
+  starts <- head(cut, -1)
+  newdata <- data.frame(
+    tstart = starts,
+    post_tau = as.integer(starts >= tau),
+    offset = 0
+  )
+  for (variable in covariates) newdata[[variable]] <- 0
+
+  hazard_hat <- predict(fit, newdata = newdata, type = "response")
+  hazard_true <- true_hazard(starts, cfg$delta)
+  hazard_ise <- sum(diff(cut) * (hazard_hat - hazard_true)^2)
+  newdata$hazard_hat <- hazard_hat
+  newdata$hazard_true <- hazard_true
+
+  data.table(
+    delta = cfg$delta,
+    covariate_setting = cfg$covariate_setting,
+    truth = truth,
+    estimate = estimates[names(truth), "Estimate"],
+    se = estimates[names(truth), "Std. Error"],
+    hazard_ise = hazard_ise,
+    event_rate = mean(dat$status == 1),
+    random_censoring = mean(dat$censoring_reason == "random")
+  )
+}))
+
+# Results ---------------------------------------------------------------------
+print(validation_01)
