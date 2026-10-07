@@ -55,3 +55,20 @@ results <- do.call(
     do.call(run_one_level_shift_polynomial, args)
   })
 )
+
+# Save results
+saveRDS(
+  object = results,
+  file = "simulation/results/pilot/04_level_shift_null_polynomial_raw.rds"
+)
+
+results <- as.data.table(results)
+
+if (any(!results$success)) {
+  print(results[success == FALSE, .(scenario, rep, seed, error)])
+}
+
+results[success == TRUE, .(
+  alpha_hat = mean(split_detected),
+  mcse = sqrt(mean(split_detected) * (1 - mean(split_detected)) / .N)
+), by = .(scenario)]
