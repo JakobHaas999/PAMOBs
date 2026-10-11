@@ -35,11 +35,10 @@ pamob <- function(
   min_events = 20,
   gam_method = "REML",
   sp = NULL,
-  vcov = "sandwich",
   ...
 ) {
   cl <- match.call()
-  control <- partykit::mob_control(vcov = vcov, ...)
+  control <- partykit::mob_control(...)
   data <- as.data.frame(data)
   checkmate::assert_formula(formula)
   checkmate::assert_data_frame(data)
