@@ -4,6 +4,7 @@ source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("R/pemob.R")
+source("simulation/R/run_covariate_instability.R")
 
 ### Run information
 run_id <- "covariate_instability_pemob_v1"
@@ -76,10 +77,10 @@ for (block in unique(sort(design$block_id))) {
   }
   rows <- which(design$block_id == block)
   message("Running block ", block, " of ", max(design$block_id))
-  design <- design[rows, ]
+  block_design <- design[rows, , drop = FALSE]
   block_results <- run_covariate_instability(
     log_hazard = log_hazard,
-    design = design,
+    design = block_design,
     sim_formula = sim_formula,
     fit_formula = fit_formula,
     fit_fun = pemob,
@@ -87,8 +88,6 @@ for (block in unique(sort(design$block_id))) {
     alpha = 0.05,
     maxdepth = 2
   )
-  block_results$design_id <- rows
-  block_results$block_id <- block_id
   block_results$run_id <- run_id
   tmp_file <- paste0(block_file, ".tmp")
   saveRDS(block_results, tmp_file)
