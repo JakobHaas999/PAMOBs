@@ -4,7 +4,7 @@ source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("R/pemtree_splines.R")
-source("R/pamob.R")
+source("R/pemob.R")
 # Simulation helper
 source("simulation/R/run_covariate_instability.R")
 
@@ -28,12 +28,13 @@ design <- expand.grid(
   fit_interval = 0.1,
   KEEP.OUT.ATTRS = FALSE
 )
+design$seed <- 300000 + seq_len(nrow(design))
 
 sim_formula <- ~ log_hazard(t) + 0.7 * x1 + 0.4 * x2
-fit_formula <- Surv(time, status) ~ poly(tend, degree = 2, raw = TRUE) + x1 + x2
+fit_formula <- Surv(time, status) ~ poly(tend, degree = 2, raw = TRUE) + x1 + x2 + offset(offset) | x3
 
 # Run pilot simulation
-results_pamtree <- run_covariate_instability(
+results_pemtree <- run_covariate_instability(
   log_hazard = log_hazard,
   design = design,
   sim_formula = sim_formula,
@@ -53,8 +54,17 @@ results_pemob <- run_covariate_instability(
   alpha = 0.05,
   maxdepth = 2
 )
-results <- rbind.data.frame(results_pamtree, results_pemob)
+results_pemtree$method <- "pemtree"
+results_pemob$method <- "pemob"
+results <- rbind.data.frame(results_pemtree, results_pemob)
+rm(results_pemtree, results_pemob)
 # Save results
 saveRDS(results, "simulation/results/pilot/07_compare_pemob_pemtree_pilot.rds")
 
 # Analysis of results
+all.equal(nrow(results), sum(results$success))
+data.table::setDT(results)
+results[success == TRUE, .(
+  alpha_hat = mean(split_detected),
+  mcse = sqrt(mean(split_detected) * (1 - mean(split_detected)) / .N)
+), by = .(n, method)]
