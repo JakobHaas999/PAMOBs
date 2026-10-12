@@ -18,8 +18,8 @@ covariate_spec <- list(
   x3 = list(distfun = rbinom, prob = 0.5, size = 1)
 )
 
-admin_time <- 10
-cut <- seq(0, admin_time, by = 0.05)
+# admin_time <- 10
+# cut <- seq(0, admin_time, by = 0.05)
 
 design <- expand.grid(
   n = c(1000, 2000),

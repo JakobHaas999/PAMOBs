@@ -4,13 +4,14 @@ source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("R/pemob.R")
+# Simulation helper
 source("simulation/R/run_covariate_instability.R")
 
 ### Run information
 run_id <- "covariate_instability_pemob_v1"
 block_size <- 50
 
-### Specify simulation paramters
+### Specify simulation parameters
 
 # Quadratic baseline hazard
 log_hazard <- function(t) {
