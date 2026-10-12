@@ -1,1 +1,1 @@
-# Bacherlorproject Model based trees
+# Bachelorproject Model based trees
