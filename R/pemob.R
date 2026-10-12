@@ -37,8 +37,10 @@ pemob <- function(
 ) {
   cl <- match.call()
   control <- partykit::mob_control(...)
-  # TODO asserts
-  ###############
+  checkmate::assert_formula(formula)
+  checkmate::assert_data_frame(data)
+  checkmate::assert_numeric(cut, lower = 0, any.missing = FALSE)
+  checkmate::assert_count(min_events, positive = TRUE)
 
   f <- Formula::Formula(formula)
   if (length(f)[[2]] != 2) {
