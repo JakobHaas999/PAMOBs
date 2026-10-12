@@ -4,6 +4,9 @@ source("R/sim_pexponential.R")
 source("R/sim_censoring.R")
 source("R/simulation_pam.R")
 source("R/pamob.R")
+# Simulation helper
+source("simulation/R/run_covariate_instability.R")
+
 
 log_hazard <- function(t) {
   -1.1 * sin(pi / 4) * t
@@ -23,71 +26,38 @@ design <- expand.grid(
   delta = c(0, 0.4, 0.8),
   censoring_rate = 0.3,
   rep = seq_len(10),
+  admin_time = 10,
+  sim_interval = 0.05,
+  fit_interval = 0.1,
   KEEP.OUT.ATTRS = FALSE
 )
 design$seed <- 8000 + seq_len(nrow(design))
 
-results <- lapply(seq_len(nrow(design)), function(i) {
-  d <- design[i, , drop = FALSE]
-  set.seed(d$seed)
-
-  sim_formula <- as.formula(
-    paste0(
-      "~ log_hazard(t) + 0.7 * x1 + 0.4 * x2 + ",
-      d$delta,
-      " * (x3 == 1) * x1"
-    )
+sim_formula <- function(d) {
+  reformulate(
+    termlabels = c(
+      "log_hazard(t)",
+      "0.7 * x1",
+      "0.4 * x2",
+      sprintf("(%s) * (x3 == 1) * x1", d$delta)
+    ),
+    env = environment()
   )
+}
+fit_formula <- Surv(time, status) ~ s(tend, bs = "ps", k = 8) + x1 + x2 + offset(offset) | x3
 
-  out <- tryCatch(
-    {
-      sim_data <- sim_pam(
-        n = d$n,
-        formula = sim_formula,
-        covariate_spec = covariate_spec,
-        censoring_rate = d$censoring_rate,
-        admin_time = admin_time,
-        cut = cut
-      )
-
-      fit <- pamob(
-        formula = Surv(time, status) ~ s(tend, bs = "ps", k = 8) + x1 + x2 + offset(offset) | x3,
-        data = sim_data,
-        cut = cut,
-        min_events = 20,
-        alpha = 0.05,
-        maxdepth = 2,
-        vcov = "opg"
-      )
-      n_terminal <- length(partykit::nodeids(fit$tree, terminal = TRUE))
-      root_info <- partykit::info_node(partykit::node_party(fit$tree))
-      test_failed <- is.null(root_info$test) ||
-        anyNA(root_info$test["p.value", ])
-      if (test_failed) stop("MOB fluctuation test failed")
-
-      data.frame(
-        success = TRUE,
-        split_detected = n_terminal > 1,
-        n_terminal_nodes = n_terminal,
-        observed_censoring = mean(sim_data$status == 0),
-        error = NA_character_
-      )
-    },
-    error = function(e) {
-      data.frame(
-        success = FALSE,
-        split_detected = NA,
-        n_terminal_nodes = NA_integer_,
-        observed_censoring = NA_real_,
-        error = conditionMessage(e)
-      )
-    }
-  )
-
-  cbind(d, out)
-})
-
-results <- do.call(rbind, results)
+results <- run_covariate_instability(
+  log_hazard = log_hazard,
+  design = design,
+  sim_formula = sim_formula,
+  fit_formula = fit_formula,
+  fit_fun = pamob,
+  covariate_spec = covariate_spec,
+  min_events = 20,
+  alpha = 0.05,
+  maxdepth = 2,
+  vcov = "opg"
+)
 saveRDS(results, "simulation/results/pilot/06_covar_instability_pamob_pilot.rds")
 
 # Inspect results
