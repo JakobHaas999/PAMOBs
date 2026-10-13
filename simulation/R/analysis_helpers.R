@@ -64,7 +64,6 @@ summary_type_I_error <- function(results, grouping_cols = c("scenario", "n", "ce
     by = grouping_cols
   ]
 
-  data.table::setorder(summary, scenario, n, censoring_rate)
   return(summary)
 }
 
@@ -78,7 +77,6 @@ summary_obs_censoring <- function(results, grouping_cols) {
     sd_observed_censoring = sd(observed_censoring)
   ), by = grouping_cols]
 
-  data.table::setorder(summary, scenario, n, censoring_rate)
   return(summary)
 }
 
