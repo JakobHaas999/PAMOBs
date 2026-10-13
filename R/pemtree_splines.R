@@ -3,6 +3,7 @@ pemtree_splines <- function(
   data,
   cut,
   min_events = 20,
+  cluster_id = NULL,
   ...
 ) {
   cl <- match.call()
@@ -15,6 +16,7 @@ pemtree_splines <- function(
     lower = 0
   )
   checkmate::assert_count(min_events, positive = TRUE)
+  checkmate::assert_string(cluster_id, null.ok = TRUE)
 
   f <- Formula::Formula(formula)
   if (length(f)[[2]] != 2) {
@@ -103,12 +105,20 @@ pemtree_splines <- function(
     as.formula(paste(".row_id ~ 1 |", paste(partition_terms, collapse = " + ")), env = environment(formula))
   )
 
+  cluster <- NULL
+  if (!is.null(cluster)) {
+    if (!(cluster_id %in% colnames(ped))) {
+      stop("cluster_id not found in PED data.")
+    }
+    cluster <- ped[[cluster]]
+  }
+
   tree <- partykit::mob(
     formula = mob_formula,
     data = ped,
     fit = fit_fun,
     control = control,
-    cluster = ped$id
+    cluster = cluster
   )
 
   structure(
