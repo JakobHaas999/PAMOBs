@@ -107,7 +107,8 @@ pemtree_splines <- function(
     formula = mob_formula,
     data = ped,
     fit = fit_fun,
-    control = control
+    control = control,
+    cluster = ped$id
   )
 
   structure(
