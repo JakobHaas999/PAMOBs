@@ -105,21 +105,22 @@ pemtree_splines <- function(
     as.formula(paste(".row_id ~ 1 |", paste(partition_terms, collapse = " + ")), env = environment(formula))
   )
 
-  cluster <- NULL
-  if (!is.null(cluster)) {
-    if (!(cluster_id %in% colnames(ped))) {
-      stop("cluster_id not found in PED data.")
-    }
-    cluster <- ped[[cluster]]
-  }
-
-  tree <- partykit::mob(
+  mob_args <- list(
     formula = mob_formula,
     data = ped,
     fit = fit_fun,
-    control = control,
-    cluster = cluster
+    control = control
   )
+
+  if (!is.null(cluster_id)) {
+    if (!(cluster_id %in% colnames(ped))) {
+      stop("cluster_id not found in PED data.")
+    }
+    mob_args$cluster <- ped[[cluster_id]]
+  }
+
+
+  tree <- do.call(partykit::mob, mob_args)
 
   structure(
     list(
@@ -137,4 +138,33 @@ pemtree_splines <- function(
     ),
     class = c("pemtree")
   )
+}
+
+# Print a Piecewise Exponential Model Tree
+#
+# Prints a compact representation of a fitted "pemtree" object, including
+# the original function call and the underlying generalized linear model
+# tree.
+print.pemtree <- function(x, ...) {
+  cat("Piecewise Exponential Model Tree\n\n")
+
+  cat("Call:\n")
+  print(x$call)
+
+  cat("\nModel formula:\n")
+  print(x$mob_formula)
+
+  cat("\nFitted party:\n")
+  print(partykit::node_party(x$tree), ...)
+
+  cat("\nNumber of inner nodes:    ")
+  cat(length(partykit::nodeids(x$tree, terminal = FALSE)) - 1L)
+
+  cat("\nNumber of terminal nodes: ")
+  cat(length(partykit::nodeids(x$tree, terminal = TRUE)))
+
+  cat("\nCoefficients:\n")
+  print(coef(x$tree))
+
+  invisible(x)
 }
