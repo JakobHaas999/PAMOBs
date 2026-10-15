@@ -16,7 +16,7 @@
 # The fitted tree, PED representation, model formulas, cut points, and
 # additional information required for subsequent methods are stored in
 # an object of class "pemtree".
-pemtree <- function(
+pemtree_old <- function(
   formula,
   data,
   cut,

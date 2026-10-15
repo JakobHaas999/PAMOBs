@@ -1,4 +1,22 @@
-pemtree_splines <- function(
+# Fit a Piecewise Exponential Model Tree
+#
+# This function combines piecewise exponential models (PEMs) with
+# model-based recursive partitioning. The supplied survival data are first
+# transformed into piecewise exponential data (PED). A Poisson GLM tree is
+# then fitted to the PED representation using `partykit::glmtree()`.
+#
+# The formula follows the model-based recursive partitioning structure
+#
+#   Surv(time, status) ~ model terms | partitioning variables
+#
+# where the terms on the left-hand side of `|` define the node-specific
+# PEM and the variables on the right-hand side define potential splitting
+# variables.
+#
+# The fitted tree, PED representation, model formulas, cut points, and
+# additional information required for subsequent methods are stored in
+# an object of class "pemtree".
+pemtree <- function(
   formula,
   data,
   cut,
