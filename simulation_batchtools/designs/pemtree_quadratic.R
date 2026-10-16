@@ -4,16 +4,34 @@ config <- list(
 )
 config$covariate_spec <- list(
   x1 = list(distfun = stats::rnorm),
-  x2 = list(stats::rbinom, size = 1, prob = 0.5)
+  x2 = list(distfun = stats::rbinom, size = 1, prob = 0.5)
 )
 config$covariate_effects <- c(x1 = 0.3, x2 = 0.5)
+
+config$model_args <- function(pars) {
+  covariate_terms <- if (pars$covariate_setting == "included") {
+    names(pars$covariate_spec)
+  } else {
+    character(0)
+  }
+  model_terms <- c("poly(tend, degree = 2, raw = TRUE)", covariate_terms, "offset(offset)")
+  model_formula <- stats::as.formula(
+    paste(
+      "survival::Surv(time, status) ~",
+      paste(model_terms, collapse = " + "),
+      "| tend"
+    )
+  )
+
+  list(formula = model_formula, min_events = pars$min_events, alpha = pars$alpha, maxdepth = pars$maxdepth)
+}
 
 design <- expand.grid(
   n = 1000L,
 
-  beta0 = -2,
-  beta1 = 1.1,
-  beta2 = -0.8,
+  beta0 = -1.5,
+  beta1 = 1.2,
+  beta2 = -0.2,
 
   delta = 0,
   tau = 0,
@@ -21,7 +39,7 @@ design <- expand.grid(
   covariate_setting = c("none", "included"),
 
   censoring_rate = 0.3,
-  admin_time = 10,
+  admin_time = 6,
 
   min_events = 25L,
   alpha = 0.05,

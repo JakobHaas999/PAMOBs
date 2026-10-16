@@ -22,7 +22,7 @@ quadratic_baseline <- function(pars) {
   sim_pam(
     n = pars$n,
     formula = sim_formula,
-    covariate_spec = covariate_spec,
+    covariate_spec = pars$covariate_spec,
     censoring_rate = pars$censoring_rate,
     admin_time = pars$admin_time,
     cut = seq(0, pars$admin_time, by = 0.01)
