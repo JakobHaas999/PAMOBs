@@ -1,13 +1,19 @@
-# Run from the project root.
-registry_env <- new.env(parent = globalenv())
+run_env <- new.env(parent = globalenv())
 
-sys.source(
+design_file <- "simulation_batchtools/designs/pilot/pemtree_quadratic_pilot.R"
+
+source_files <- c(
   "simulation_batchtools/R/create_registry.R",
-  envir = registry_env
+  "simulation_batchtools/R/run_registry.R",
+  design_file
 )
 
-reg <- registry_env$create_registry(
-  design_file = "simulation_batchtools/designs/pilot/pemtree_quadratic_pilot.R"
+for (source_file in source_files) sys.source(source_file, envir = run_env)
+
+registry_dir <- file.path(
+  "simulation_batchtools", "registries", run_env$config$phase, run_env$config$run_id
 )
 
-batchtools::getStatus(reg = reg)
+if (!dir.exists(registry_dir)) run_env$create_registry(design_file)
+
+reg <- run_env$run_registry(registry = registry_dir, ncpus = run_env$config$ncpus)
