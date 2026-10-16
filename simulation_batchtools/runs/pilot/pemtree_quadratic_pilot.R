@@ -16,4 +16,4 @@ registry_dir <- file.path(
 
 if (!dir.exists(registry_dir)) run_env$create_registry(design_file)
 
-reg <- run_env$run_registry(registry = registry_dir, ncpus = run_env$config$ncpus)
+reg <- run_env$run_registry(registry_dir = registry_dir, ncpus = run_env$config$ncpus)
