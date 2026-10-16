@@ -15,11 +15,11 @@
 #
 # The fitted tree, PED representation, model formulas, cut points, and
 # additional information required for subsequent methods are stored in
-# an object of class "pemtree".
+# an object of class "pemtree"
 pemtree <- function(
   formula,
   data,
-  cut,
+  cut = NULL,
   min_events = 20,
   cluster_id = NULL,
   ...
@@ -31,7 +31,8 @@ pemtree <- function(
   checkmate::assert_numeric(
     cut,
     any.missing = FALSE,
-    lower = 0
+    lower = 0,
+    null.ok = TRUE
   )
   checkmate::assert_count(min_events, positive = TRUE)
   checkmate::assert_string(cluster_id, null.ok = TRUE)
@@ -52,11 +53,9 @@ pemtree <- function(
     response = deparse(response)
   )
 
-  ped <- pammtools::as_ped(
-    formula = ped_formula,
-    data = data,
-    cut = cut
-  )
+  ped_args <- list(formula = ped_formula, data = data)
+  if (!is.null(cut)) ped_args$cut <- cut
+  ped <- do.call(pammtools::as_ped, ped_args)
 
   ped$.row_id <- seq_len(nrow(ped))
 
