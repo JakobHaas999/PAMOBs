@@ -1,5 +1,6 @@
 config <- list(
-  run_id = "pemtree_null_quadratic",
+  run_id = "pemtree_quadratic_pilot",
+  phase = "pilot",
   ncpus = 2L
 )
 config$covariate_spec <- list(
@@ -25,6 +26,28 @@ config$model_args <- function(pars) {
 
   list(formula = model_formula, min_events = pars$min_events, alpha = pars$alpha, maxdepth = pars$maxdepth)
 }
+config$dgp <- "quadratic_baseline"
+config$fit_model <- "fit_pemtree"
+config$evaluate <- "evaluate_time_splits"
+config$source <- c(
+  "R/sim_pexponential.R",
+  "R/sim_censoring.R",
+  "R/simulation_pam.R",
+  "R/pemtree_splines.R",
+  "simulation_batchtools/dgps/quadratic_baseline.R",
+  "simulation_batchtools/methods/pemtree.R",
+  "simulation_batchtools/metrics/tree_splits.R"
+)
+config$packages <- character(0)
+
+config$prepare_pars <- function(pars) {
+  pars$covariate_spec <- config$covariate_spec
+  pars$covariate_effects <- config$covariate_effects
+  pars$model_args <- config$model_args(pars)
+
+  pars
+}
+
 
 design <- expand.grid(
   n = 1000L,

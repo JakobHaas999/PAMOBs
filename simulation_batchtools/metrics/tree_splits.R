@@ -16,7 +16,7 @@ evaluate_time_splits <- function(model, dat, pars) {
     split_detected = split_detected,
     n_terminal_nodes = n_terminal_nodes,
     tau_hat = tau_hat,
-    abs_tau_error = if (pars$delta) NA_real_ else abs(tau_hat - pars$tau),
+    abs_tau_error = if (pars$delta == 0) NA_real_ else abs(tau_hat - pars$tau),
     observed_censoring = obs_cens
   )
 }
