@@ -129,19 +129,40 @@ pemtree_old <- function(
   ), class = "pemtree")
 }
 
-# Print a Piecewise Exponential Model Tree
-#
-# Prints a compact representation of a fitted "pemtree" object, including
-# the original function call and the underlying generalized linear model
-# tree.
-print.pemtree <- function(x, ...) {
+print.pemtree <- function(x, digits = 3L, ...) {
+
   cat("Piecewise Exponential Model Tree\n\n")
 
-  cat("Call:\n")
-  print(x$call)
+  cat("Model formula:\n")
+  cat(
+    paste(deparse(x$formula, width.cutoff = 70L), collapse = "\n"),
+    "\n",
+    sep = ""
+  )
 
-  cat("\nFitted tree:\n")
-  print(x$tree, ...)
+  terminal_ids <- partykit::nodeids(
+    x$tree,
+    terminal = TRUE
+  )
+
+  coefficients <- stats::coef(
+    x$tree,
+    node = terminal_ids,
+    drop = FALSE
+  )
+
+  coefficient_table <- data.frame(
+    Node = rep(terminal_ids, each = ncol(coefficients)),
+    Term = rep(colnames(coefficients), times = nrow(coefficients)),
+    Estimate = as.vector(t(coefficients))
+  )
+
+  cat("\nCoefficients:\n")
+  print(
+    coefficient_table,
+    row.names = FALSE,
+    digits = digits
+  )
 
   invisible(x)
 }
