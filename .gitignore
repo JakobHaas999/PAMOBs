@@ -61,3 +61,7 @@ thesis_plots
 
 # Rplots
 Rplots.pdf
+
+# Batchtools simulations
+/simulation_batchtools/registries/
+/simulation_batchtools/results/
