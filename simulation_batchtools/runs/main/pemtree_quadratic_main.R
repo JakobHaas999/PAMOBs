@@ -1,6 +1,6 @@
 run_env <- new.env(parent = globalenv())
 
-design_file <- "simulation_batchtools/designs/main/pemtree_quadratic.R"
+design_file <- "simulation_batchtools/designs/main/pemtree_quadratic_main.R"
 
 source_files <- c(
   "simulation_batchtools/R/create_registry.R",
