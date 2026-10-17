@@ -39,7 +39,8 @@ sim_weibull <- function(
   covariate_effects = NULL,
   censoring_rate,
   tau = NULL,
-  delta = 0
+  delta = 0,
+  admin_time = Inf
 ) {
   # Arguments:
   # n: number of simulations
@@ -50,11 +51,17 @@ sim_weibull <- function(
   # censoring_rate:
   # tau:
   # delta:
+  # admin_time:
 
   checkmate::assert_count(n, positive = TRUE)
   checkmate::assert_number(shape, lower = .Machine$double.eps)
   checkmate::assert_number(rate, lower = .Machine$double.eps)
   checkmate::assert_number(censoring_rate, lower = 0, upper = 1)
+  checkmate::assert_number(
+    admin_time,
+    lower = 0,
+    finite = FALSE
+  )
   if (!is.null(tau)) {
     checkmate::assert_number(tau, lower = 0)
     checkmate::assert_number(delta)
@@ -144,8 +151,8 @@ sim_weibull <- function(
 
     ct <- rexp(n, rate = lambda_c)
   }
-  status <- as.integer(t <= ct)
-  time <- pmin(t, ct)
+  status <- as.integer(t <= ct & t <= admin_time)
+  time <- pmin(t, ct, admin_time)
 
   if (!is.null(covariate_spec)) {
     out <- data.frame(time = time, status = status, X)
