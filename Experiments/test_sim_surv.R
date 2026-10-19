@@ -65,7 +65,7 @@ ggplot() +
   labs(x = "time", y = expression(lambda(t))) +
   theme_bw()
 
-## ## Scenario 2: Weibull Hazard with structural change ---------------------------------
+## Scenario 3: Weibull Hazard with structural change ---------------------------------
 shape <- 1.5
 rate <- 0.05
 delta <- log(3)
@@ -80,7 +80,7 @@ sim_data_3 <- sim_surv(
 )
 
 truth <- data.frame(t = sort(unique(c(seq(0, 10, by = 0.01), tau))))
-truth$hazard <- with(truth, rate * shape * t^(shape - 1) * exp(delta))
+truth$hazard <- with(truth, rate * shape * t^(shape - 1) * exp(delta * (t >= tau)))
 
 cuts <- sort(unique(c(
   seq(0, ceiling(max(sim_data_3$time)), by = 1), tau
@@ -101,5 +101,6 @@ ggplot() +
     colour = "steelblue", linewidth = 0.9
   ) +
   geom_line(data = truth, aes(x = t, y = hazard)) +
+  geom_vline(xintercept = tau, lty = 2) +
   labs(x = "time", y = expression(lambda(t))) +
   theme_bw()
