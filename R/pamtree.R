@@ -1,3 +1,53 @@
+# Fit a Piecewise Exponential Additive Model Tree
+#
+# Transforms survival data into piecewise exponential data (PED) using
+# pammtools::as_ped() and fits a model-based recursive partitioning tree
+# with partykit::mob(). Each node contains a Poisson GAM with a log link,
+# fitted by mgcv::gam(). The model can include smooth and linear effects;
+# parameter instability tests determine whether a node should be split.
+#
+# Input:
+#   formula     Two-part formula specifying the survival response, node
+#               model, and candidate partitioning variables, for example:
+#                 Surv(time, status) ~ s(tend) + x + offset(offset) | z
+#               Terms before | define the node model; terms after | define
+#               splitting variables. Include offset(offset) to account for
+#               interval exposure times. The PED variables tend and offset
+#               are generated during transformation.
+#   data        Data frame containing the survival response and covariates
+#               referenced in formula.
+#   cut         Non-negative numeric vector of interval boundaries passed
+#               to as_ped(). If NULL (default), its default cut-point
+#               selection is used.
+#   min_events  Minimum number of observed events required for a valid
+#               node fit (default: 20). Fits below this threshold are
+#               assigned an infinite objective value.
+#   sp          Optional finite, non-negative scalar smoothing parameter,
+#               applied to all smooth penalties and held fixed across nodes.
+#               If NULL (default), smoothing parameters are estimated
+#               separately for each node using gam_method.
+#   gam_method  Estimation method passed to mgcv::gam() as method
+#               (default: "REML").
+#   cluster_id  Optional name of a column in the PED data identifying
+#               clusters for covariance estimation in the parameter
+#               instability tests. If NULL (default), no cluster vector
+#               is supplied to mob().
+#   ...         Additional arguments passed to partykit::mob_control(),
+#               for example alpha, maxdepth, minsize, and verbose.
+#
+# Output:
+#   A list of class c("pamtree", "pemtree") containing:
+#   tree          Fitted model-based partitioning tree from mob().
+#   formula       Original two-part survival formula.
+#   node_formula  Poisson GAM formula with ped_status as the response.
+#   mob_formula   Internal tree formula using PED row IDs as the response.
+#   ped_formula   Survival formula used for the PED transformation.
+#   ped           Transformed PED data, including an internal .row_id.
+#   nobs          Number of rows in the original data.
+#   nobs_ped      Number of rows in the PED data.
+#   cut           Supplied cut argument; remains NULL if omitted.
+#   min_events    Supplied minimum event threshold.
+#   call          Matched function call.
 pamtree <- function(
   formula,
   data,
@@ -193,36 +243,36 @@ pamtree <- function(
 }
 
 
-## Example call
-# Simulated some data with a structural change
-n <- 2000
-shape <- 1.5
-rate <- 0.05
-
-tau <- 5
-delta <- log(5)
-
-log_hazard <- ~ log(rate) + log(shape) + (shape - 1) * log(t) + delta * (t >= tau)
-data <- data.frame(id = 1:n)
-
-admin_time <- 10
-censoring_rate <- 0.3
-
-set.seed(1827)
-sim_data <- sim_surv(
-  formula = log_hazard,
-  data = data,
-  breaks = tau,
-  admin_time = admin_time,
-  censoring_rate = censoring_rate
-)
-
-# Fit the tree
-formula <- Surv(time, status) ~ s(tend, bs = "ps") + offset(offset) | tend
-tree_fit <- pamtree(
-  formula = formula,
-  data = sim_data,
-  cut = seq(0, 10, by = 0.1),
-  maxdepth = 2,
-  alpha = 0.05
-)
+# ## Example call
+# # Simulated some data with a structural change
+# n <- 2000
+# shape <- 1.5
+# rate <- 0.05
+#
+# tau <- 5
+# delta <- log(5)
+#
+# log_hazard <- ~ log(rate) + log(shape) + (shape - 1) * log(t) + delta * (t >= tau)
+# data <- data.frame(id = 1:n)
+#
+# admin_time <- 10
+# censoring_rate <- 0.3
+#
+# set.seed(1827)
+# sim_data <- sim_surv(
+#   formula = log_hazard,
+#   data = data,
+#   breaks = tau,
+#   admin_time = admin_time,
+#   censoring_rate = censoring_rate
+# )
+#
+# # Fit the tree
+# formula <- Surv(time, status) ~ s(tend, bs = "ps") + offset(offset) | tend
+# tree_fit <- pamtree(
+#   formula = formula,
+#   data = sim_data,
+#   cut = seq(0, 10, by = 0.1),
+#   maxdepth = 2,
+#   alpha = 0.05
+# )
