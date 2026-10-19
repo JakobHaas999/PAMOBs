@@ -4,6 +4,7 @@
 # all required packages
 packages <- c(
   "pammtools",
+  "simsurv",
   "partykit",
   "dplyr",
   "survival",
