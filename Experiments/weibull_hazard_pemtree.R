@@ -84,7 +84,7 @@ for (i in seq_len(n_sim)) {
   cat("Observed censoring: ", mean(sim_data$status == 0), "\n")
 
   tree_fit <- pemtree(
-    formula = Surv(time, status) ~ bs(tend, df = 5) + offset(offset) | tend,
+    formula = Surv(time, status) ~ bs(tend, df = 6) + offset(offset) | tend,
     data = sim_data,
     min_events = 20,
     maxdepth = 2,
@@ -208,7 +208,7 @@ for (i in seq_len(n_sim)) {
   )
   cat("Observed censoring: ", mean(sim_data$status == 0), "\n")
   tree_fit <- pemtree(
-    formula = Surv(time, status) ~ bs(tend, df = 4) + z + offset(offset) | tend,
+    formula = Surv(time, status) ~ bs(tend, df = 6) + z + offset(offset) | tend,
     data = sim_data,
     cut = seq(0, 10, by = 0.1),
     alpha = 0.05,
@@ -256,7 +256,7 @@ for (i in seq_len(n_sim)) {
   )
   cat("Observed censoring: ", mean(sim_data$status == 0), "\n")
   tree_fit <- pemtree(
-    formula = Surv(time, status) ~ bs(tend, df = 4) + z + offset(offset) | tend,
+    formula = Surv(time, status) ~ bs(tend, df = 6) + z + offset(offset) | tend,
     data = sim_data,
     cut = seq(0, 10, by = 0.1),
     alpha = 0.05,
@@ -273,6 +273,7 @@ for (i in seq_len(n_sim)) {
   } else {
     tau_hat <- NA_real_
   }
+  tau_hats_chang_eff[i] <- tau_hat
 
 
   run_time <- proc.time()[["elapsed"]] - start_time
@@ -282,22 +283,4 @@ for (i in seq_len(n_sim)) {
 power_chang_eff <- mean(split_detected_chang_eff)
 cat("Estimated power: ", power_chang_eff)
 
-# Grep splits points and coefficients for z from the models
-results <- lapply(seq_len(length(models_chang_eff)), function(i) {
-  if (!split_detected_chang_eff[i]) {
-    return(data.frame(tau_hat = NA_real_, beta_1 = NA_real_, beta_2 = NA_real_))
-  }
-
-  model <- models_chang_eff[[i]]
-  tree <- model$tree
-  root <- partykit::node_party(tree)
-  tau_hat <- breaks_split(split_node(root))
-
-  beta_1 <- coef(tree)[1, "z"]
-  beta_2 <- coef(tree)[2, "z"]
-
-  data.frame(tau_hat = tau_hat, beta_1 = beta_1, beta_2 = beta_2)
-})
-
-results <- do.call(rbind, results)
-results
+tau_hats_chang_eff
