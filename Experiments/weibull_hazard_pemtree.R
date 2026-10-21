@@ -244,6 +244,7 @@ seeds <- 1604L + seq_len(n_sim)
 
 models_chang_eff <- list()
 split_detected_chang_eff <- logical(n_sim)
+tau_hats_chang_eff <- numeric(n_sim)
 
 for (i in seq_len(n_sim)) {
   cat("\nRunning simulation: ", i, "\n")
