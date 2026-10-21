@@ -47,10 +47,11 @@ plot_est_hazard <- function(t_grid, hazard_true, models) {
   )
 }
 
-## 3 Scenarios ----------------------------------------------------
+## 4 Scenarios ----------------------------------------------------
 # 1) Null scenario: Hazard without level shift -> No split.
-# 2) Power scenario: Test for delta = 0.4 and delta = 0.8 if a split is detected.
-# 3) Time-varying covariate effect. The effect of a covariate changes at some time point tau.
+# 2) Power scenario: Test for delta = 0.8 if a split is detected.
+# 3) Time-varying covariate effect null scenario
+# 4) Time-varying covariate effect. The effect of a covariate changes at some time point tau.
 #    Can we recover a split point here?
 
 ## Scenario 1 ------------------------------------------------------
@@ -123,6 +124,7 @@ seeds <- 1058L + seq_len(n_sim)
 
 split_detected_power <- logical(n_sim)
 models_power <- list()
+tau_hats <- numeric(n_sim)
 
 for (i in seq_len(n_sim)) {
   cat("\n\nRunning simulation: ", i, "\n")
@@ -139,7 +141,7 @@ for (i in seq_len(n_sim)) {
   )
   cat("Observed censoring: ", mean(sim_data$status == 0), "\n")
   tree_fit <- pemtree(
-    formula = Surv(time, status) ~ bs(tend, df = 5) + offset(offset) | tend,
+    formula = Surv(time, status) ~ bs(tend, df = 6) + offset(offset) | tend,
     data = sim_data,
     min_events = 20,
     maxdepth = 2,
@@ -151,12 +153,25 @@ for (i in seq_len(n_sim)) {
   split_detected_power[i] <- n_terminal_nodes > 1
   models_power[[length(models_power) + 1]] <- tree_fit
 
+  if (n_terminal_nodes > 1) {
+    root <- node_party(tree_fit$tree)
+    tau_hat <- breaks_split(split_node(root))
+  } else {
+    tau_hat <- NA_real_
+  }
+  tau_hats[i] <- tau_hat
+
+
   run_time <- proc.time()[["elapsed"]] - start_time
   cat("Finished simulation: ", i, ", run time: ", run_time)
 }
 
 power_hat <- mean(split_detected_power)
 cat("Estimated Power: ", power_hat, "\n")
+
+# Plot tau distribution
+tau_hats <- tau_hats[!is.na(tau_hats)]
+tau_hats
 
 # Plot estimated hazards
 t_grid <- seq(0, 10, length.out = 500)
@@ -168,6 +183,51 @@ hazard_true <- ifelse(
 plot_est_hazard(t_grid, hazard_true, models_power)
 
 ## Scenario 3 ------------------------------------------------------
+n <- 1000
+
+shape <- 1.5
+rate <- 0.05
+
+beta <- log(2)
+
+log_hazard <- ~ log(rate) + log(shape) + (shape - 1) * log(t) + beta * z
+
+n_sim <- 20L
+seeds <- 1307L + seq_len(n_sim)
+
+models_no_chang_eff <- list()
+split_detected_no_chang_eff <- logical(n_sim)
+
+for (i in seq_len(n_sim)) {
+  cat("\nRunning simulation: ", i, "\n")
+  set.seed(seeds[i])
+  start_time <- proc.time()["elapsed"]
+  data <- data.frame(z = rbinom(n, size = 1, prob = 0.5))
+  sim_data <- sim_surv(
+    formula = log_hazard, data = data, admin_time = 10, censoring_rate = 0.2
+  )
+  cat("Observed censoring: ", mean(sim_data$status == 0), "\n")
+  tree_fit <- pemtree(
+    formula = Surv(time, status) ~ bs(tend, df = 4) + z + offset(offset) | tend,
+    data = sim_data,
+    cut = seq(0, 10, by = 0.1),
+    alpha = 0.05,
+    maxdepth = 2
+  )
+
+  n_terminal_nodes <- length(nodeids(tree_fit$tree, terminal = TRUE))
+  split_detected_no_chang_eff[i] <- n_terminal_nodes > 1
+  models_no_chang_eff[[length(models_no_chang_eff) + 1]] <- tree_fit
+
+  run_time <- proc.time()[["elapsed"]] - start_time
+  cat("Finished simulation: ", i, ", run time: ", run_time)
+}
+
+alpha_hat <- mean(split_detected_no_chang_eff)
+cat("Estimated alpha: ", alpha_hat)
+
+
+## Scenario 4 ------------------------------------------------------
 n <- 1000
 
 shape <- 1.5
@@ -202,9 +262,16 @@ for (i in seq_len(n_sim)) {
     maxdepth = 2
   )
 
-  n_terminal_nodes <- length(partykit::nodeids(tree_fit$tree, terminal = TRUE))
+  n_terminal_nodes <- length(nodeids(tree_fit$tree, terminal = TRUE))
   split_detected_chang_eff[i] <- n_terminal_nodes > 1
   models_chang_eff[[length(models_chang_eff) + 1]] <- tree_fit
+
+  if (n_terminal_nodes > 1) {
+    root <- node_party(tree_fit$tree)
+    tau_hat <- breaks_split(split_node(root))
+  } else {
+    tau_hat <- NA_real_
+  }
 
 
   run_time <- proc.time()[["elapsed"]] - start_time

@@ -145,7 +145,7 @@ pamtree <- function(
         scores <- NULL
 
         if (estfun) {
-          scores <- matrix(0, nrow = length(nrow(node_data)), ncol = length(coef_template))
+          scores <- matrix(0, nrow = nrow(node_data), ncol = length(coef_template))
           colnames(scores) <- names(coef_template)
         }
         list(
