@@ -50,28 +50,59 @@ sim_event_times <- function(
   simulated[match(data$id, simulated$id), , drop = FALSE]
 }
 
-sim_censoring <- function(event_times, censoring_rate = 0, admin_time = Inf) {
+calibrate_censoring <- function(event_times, censoring_rate, admin_time = Inf) {
   checkmate::assert_number(censoring_rate, lower = 0, upper = 1)
-  if (censoring_rate == 1) stop("censoring_rate has to be lower than 1.")
+  if (censoring_rate == 1) stop("censoring_rate has to be lower than 1")
+  checkmate::assert_number(admin_time, lower = 0)
+
+  admin_censoring <- if (is.finite(admin_time)) {
+    mean(event_times >= admin_time)
+  } else {
+    0
+  }
+  if (censoring_rate <= admin_censoring) {
+    if (censoring_rate < admin_censoring) {
+      warning(
+        sprintf(
+          paste0(
+            "Target censoring rate (%.3f) is below the administrative",
+            "censoring rate (%.3f). No additional random censoring is applied."
+          ),
+          censoring_rate, admin_censoring
+        )
+      )
+    }
+    return(0)
+  }
+
+  objective <- function(lambda) {
+    mean(
+      1 - (event_times < admin_time) * exp(-lambda * event_times)
+    ) - censoring_rate
+  }
+
+  upper <- 1
+  while (objective(upper) < 0) {
+    upper <- upper * 2
+    if (!is.finite(upper)) stop("Could not bracket censoring rate")
+  }
+
+  uniroot(
+    objective,
+    interval = c(0, upper), tol = 1e-10
+  )$root
+}
+
+sim_censoring <- function(event_times, lambda_c, admin_time = Inf) {
+  checkmate::assert_number(lambda_c, lower = 0)
+  checkmate::assert_number(admin_time, lower = 0)
 
   n <- length(event_times)
 
-  if (censoring_rate == 0) {
-    censor_times <- rep(Inf, n)
+  censor_times <- if (lambda_c == 0) {
+    rep(Inf, n)
   } else {
-    effective_times <- pmin(event_times, admin_time)
-    objective <- function(lambda) {
-      mean(-expm1(-lambda * effective_times)) - censoring_rate
-    }
-
-    upper <- 1
-    while (objective(upper) < 0) {
-      upper <- upper * 2
-      if (!is.finite(upper)) stop("Could not bracket censoring rate")
-    }
-
-    lambda_c <- uniroot(objective, interval = c(0, upper))$root
-    censor_times <- rexp(n, rate = lambda_c)
+    rexp(n, rate = lambda_c)
   }
 
   time <- pmin(event_times, censor_times, admin_time)
@@ -87,7 +118,7 @@ sim_surv <- function(
   data,
   breaks = numeric(0),
   admin_time = Inf,
-  censoring_rate = 0,
+  lambda_c = 0,
   interval = c(1e-8, 500),
   integration_tol = 1e-8
 ) {
@@ -100,12 +131,18 @@ sim_surv <- function(
     interval = interval,
     integration_tol = integration_tol
   )
-
-  censored <- sim_censoring(
-    event_times = events$eventtime,
-    censoring_rate = censoring_rate,
-    admin_time = admin_time
-  )
+  if (
+    anyNA(events$eventtime) ||
+      any(!is.finite(events$eventtime)) ||
+      anyNA(events$status) ||
+      any(events$status != 1L)
+  ) {
+    stop(
+      "Some event times were not successfully simulated. ",
+      "Check the simulation interval."
+    )
+  }
+  censored <- sim_censoring(event_times = events$eventtime, lambda_c = lambda_c, admin_time = admin_time)
 
   cbind.data.frame(data, censored)
 }
