@@ -55,6 +55,7 @@ calibrate_censoring <- function(event_times, censoring_rate, admin_time = Inf) {
   if (censoring_rate == 1) stop("censoring_rate has to be lower than 1")
   checkmate::assert_number(admin_time, lower = 0)
 
+  event_times <- event_times$eventtime
   admin_censoring <- if (is.finite(admin_time)) {
     mean(event_times >= admin_time)
   } else {
