@@ -21,18 +21,23 @@ predict_hazard <- function(fit, newdata) {
   )
 }
 
-plot_hazard_est <- function(t_grid, models, true_hazard) {
+plot_hazard_est <- function(t_grid, models, true_hazard, ylim_quantile = 0.99) {
   newdata <- data.frame(tend = t_grid)
   hazard_estimates <- lapply(models, function(model) {
     suppressWarnings(predict_hazard(model, newdata))
   })
+
+  ylim <- c(0, quantile(
+    c(true_hazard, unlist(hazard_estimates)),
+    probs = ylim_quantile, na.rm = TRUE
+  ))
 
   plot(
     t_grid, true_hazard,
     type = "l",
     col = "black",
     lwd = 3,
-    ylim = range(c(true_hazard, unlist(hazard_estimates))),
+    ylim = ylim,
     xlab = "t", ylab = expression(lambda(t))
   )
   for (i in seq_along(hazard_estimates)) {
@@ -52,7 +57,7 @@ calc_ise <- function(t_grid, hazard_est, hazard_true) {
 
 run_simulation <- function(n_sim, n_obs, n_pilot,
                            seeds, calibration_seed,
-                           formula, admin_time, censoring_rate) {
+                           formula, df = 6, admin_time, censoring_rate) {
   set.seed(calibration_seed)
   event_times <- sim_event_times(formula, data.frame(id = seq_len(n_pilot)))
   lambda_c <- calibrate_censoring(event_times, censoring_rate = censoring_rate, admin_time = admin_time)
@@ -68,7 +73,7 @@ run_simulation <- function(n_sim, n_obs, n_pilot,
 
     sim_data <- sim_surv(
       formula = formula,
-      data = data.frame(id = seq_len(n)),
+      data = data.frame(id = seq_len(n_obs)),
       admin_time = admin_time,
       lambda_c = lambda_c
     )
@@ -76,7 +81,7 @@ run_simulation <- function(n_sim, n_obs, n_pilot,
 
     fit_cut <- seq(0, admin_time, by = 0.1)
     tree_fit <- pemtree(
-      formula = Surv(time, status) ~ bs(tend, df = 6) + offset(offset) | tend,
+      formula = Surv(time, status) ~ bs(tend, df = df) + offset(offset) | tend,
       data = sim_data,
       cut = fit_cut,
       maxdepth = 2,
@@ -127,9 +132,9 @@ alpha_hat_1 <- results_1$alpha_hat
 cat("Scenario 1 alpha hat: ", alpha_hat_1, "\n")
 
 # Plot predictions
-t_grid <- seq(0.01, ceiling(max(sim_data$time)), length.out = 500)
+t_grid <- seq(0.01, admin_time, length.out = 500)
 true_hazard_1 <- exp(log_hazard(t_grid))
-plot_est_hazard(t_grid, true_hazard_1, results_1$trees)
+plot_est_hazard(t_grid, results_1$trees, true_hazard_1)
 
 # Calculate ISE
 hazard_est_1 <- lapply(results_1$trees, function(m) {
@@ -151,6 +156,7 @@ n <- 1000
 admin_time <- 10
 censoring_rate <- 0.3
 n_pilot <- 10000
+n_sim <- 50
 seeds <- 1850L + seq_len(n_sim)
 
 results_2 <- run_simulation(
@@ -163,9 +169,9 @@ alpha_hat_2 <- results_2$alpha_hat
 cat("Scenario 2 alpha hat: ", alpha_hat_2, "\n")
 
 # Plot predictions
-t_grid <- seq(0.01, ceiling(max(sim_data$time)), length.out = 500)
+t_grid <- seq(0.01, admin_time, length.out = 500)
 true_hazard_2 <- rate * shape * t_grid^(shape - 1)
-plot_est_hazard(t_grid, true_hazard_2, results_2$trees)
+plot_est_hazard(t_grid, results_2$trees, true_hazard_2)
 
 # Calculate ISE
 hazard_est_2 <- lapply(results_2$trees, function(m) {
@@ -178,4 +184,48 @@ mean(log_ise_2)
 
 results_2$wrong_taus
 
-## Scenario 3
+## Scenario 3 ----------------------------------------------------------------
+log_hazard_lnorm <- function(t, mu, sigma) {
+  dlnorm(t, meanlog = mu, sdlog = sigma, log = TRUE) -
+    plnorm(t, meanlog = mu, sdlog = sigma, lower.tail = FALSE, log.p = TRUE)
+}
+
+mu <- log(3)
+sigma <- 0.7
+
+formula <- ~ log_hazard_lnorm(t, mu = mu, sigma = sigma)
+
+n <- 1000
+admin_time <- 10
+censoring_rate <- 0.3
+n_pilot <- 10000
+n_sim <- 50
+seeds <- 1546L + seq_len(n_sim)
+
+results_3 <- run_simulation(
+  n_sim = n_sim, n_obs = n, n_pilot = n_pilot,
+  seeds = seeds, calibration_seed = 3, formula = formula, df = 5,
+  admin_time = admin_time, censoring_rate = censoring_rate
+)
+
+alpha_hat_3 <- results_3$alpha_hat
+cat("Scenario 3 alpha hat:", alpha_hat_3, "\n")
+
+## Plot predictions
+t_grid <- seq(0.01, admin_time, length.out = 500)
+true_hazard_3 <- exp(
+  log_hazard_lnorm(t_grid, mu, sigma)
+)
+plot_hazard_est(t_grid, results_3$trees, true_hazard_3)
+
+
+## Calculate log-ISE
+hazard_est_3 <- lapply(results_3$trees, function(m) {
+  suppressWarnings(predict_hazard(m, newdata = data.frame(tend = t_grid)))
+})
+log_ise_3 <- vapply(hazard_est_3, function(h) {
+  calc_ise(t_grid, log(h), log(true_hazard_3))
+}, FUN.VALUE = numeric(1))
+mean(log_ise_3)
+
+results_3$wrong_taus
