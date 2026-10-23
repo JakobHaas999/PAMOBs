@@ -65,3 +65,4 @@ Rplots.pdf
 # Batchtools simulations
 /simulation_batchtools/registries/
 /simulation_batchtools/results/
+/simulation_batchtools/calibration/calibrations_results/
