@@ -147,7 +147,7 @@ sim_surv <- function(
     anyNA(events$eventtime) ||
       any(!is.finite(events$eventtime)) ||
       anyNA(events$status) ||
-      any(events$status != 1L)
+      any(!events$status %in% c(0L, 1L))
   ) {
     stop(
       "Some event times were not successfully simulated. ",
