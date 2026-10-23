@@ -3,6 +3,7 @@ sim_event_times <- function(
   data,
   breaks = numeric(0),
   interval = c(1e-8, 500),
+  maxt = NULL,
   integration_tol = 1e-8
 ) {
   checkmate::assert_formula(formula)
@@ -22,7 +23,7 @@ sim_event_times <- function(
     rep_len(eta, length.out = length(t))
   }
 
-  args <- list(x = data, idvar = "id", ids = data$id, interval = interval)
+  args <- list(x = data, idvar = "id", ids = data$id, interval = interval, maxt = maxt)
 
   if (!length(breaks)) {
     args$loghazard <- loghazard
@@ -120,16 +121,26 @@ sim_surv <- function(
   breaks = numeric(0),
   admin_time = Inf,
   lambda_c = 0,
-  interval = c(1e-8, 500),
+  interval = NULL,
   integration_tol = 1e-8
 ) {
+  checkmate::assert_number(admin_time, lower = 0)
+  if (admin_time <= 0) stop(" admin_time must be positive.")
+  
   if (!"id" %in% colnames(data)) data$id <- seq_len(nrow(data))
+  
+  maxt <- if (is.finite(admin_time)) admin_time else NULL
+  if (is.null(interval)) {
+    upper <- if (is.null(maxt)) 500 else 1.01 * maxt
+    interval <- c(1e-8, upper)
+  }
 
   events <- sim_event_times(
     formula = formula,
     data = data,
     breaks = breaks,
     interval = interval,
+    maxt = maxt,
     integration_tol = integration_tol
   )
   if (
