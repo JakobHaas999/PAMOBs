@@ -166,7 +166,25 @@ abline(v = tau, col = "red", lwd = 2)
 
 ## Bias and RMSE
 tau_hat <- na.omit(results_2$tau_hats)
-bias_tau_1 <- mean(tau_hat - tau)
-rmse_tau_1 <- sqrt(mean((tau_hat - tau)^2))
-cat("Scenario 1 Bias:", bias_tau_1, "\n")
-cat("Scenario 1 RMSE:", rmse_tau_1, "\n")
+bias_tau_2 <- mean(tau_hat - tau)
+rmse_tau_2 <- sqrt(mean((tau_hat - tau)^2))
+cat("Scenario 2 Bias:", bias_tau_2, "\n")
+cat("Scenario 2 RMSE:", rmse_tau_2, "\n")
+
+
+## Scenario 3 ----------------------------------------------------------------
+mu <- 1.5
+sigma <- 0.7
+tau <- 5
+delta <- log(3)
+
+log_hazard <- function(t) {
+  z <- (log(t) - mu) / sigma
+
+  log_h0 <- dnorm(z, log = TRUE) -
+    log(t) -
+    log(sigma) -
+    pnorm(z, lower.tail = FALSE, log.p = TRUE)
+
+  log_h0 + delta(t >= tau)
+}
