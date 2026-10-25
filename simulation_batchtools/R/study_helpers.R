@@ -1,17 +1,6 @@
 # Cross data-generating settings with model df and repetitions. Seeds identify
 # data sets, so the same data are regenerated for every df in a comparison.
 cross_df_repetitions <- function(settings, dfs, n_rep, seed_offset) {
-  checkmate::assert_data_frame(settings, min.rows = 1L)
-  checkmate::assert_integerish(dfs, lower = 3, any.missing = FALSE, min.len = 1L)
-  checkmate::assert_count(n_rep, positive = TRUE)
-  checkmate::assert_count(seed_offset)
-  if (anyDuplicated(dfs)) stop("dfs must contain distinct values.")
-  if (anyDuplicated(settings)) stop("Data-generating settings must be unique.")
-  if (n_rep > 10000L) stop("At most 10000 repetitions are supported per setting.")
-  if (seed_offset + 10000 * nrow(settings) + n_rep > .Machine$integer.max) {
-    stop("The seed scheme exceeds the supported integer range.")
-  }
-
   settings$dgp_id <- seq_len(nrow(settings))
   grid <- expand.grid(data_row = seq_len(nrow(settings)), df = as.integer(dfs))
   settings <- settings[grid$data_row, , drop = FALSE]

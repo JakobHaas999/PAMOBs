@@ -10,7 +10,6 @@ run_level_shift_scenarios_pilot <- function(action = c("run", "prepare", "calibr
   run_id <- "level_shift_scenario_pilot_df_v2"
   n_calibration <- 50000L
   calibration_seed <- 1900000L
-  calibration_file <- "simulation_batchtools/results/calibration/level_shift_scenarios.rds"
 
   source("simulation_batchtools/R/study_helpers.R", local = TRUE)
 
@@ -117,9 +116,11 @@ run_level_shift_scenarios_pilot <- function(action = c("run", "prepare", "calibr
 
   source("R/sim_surv.R", local = TRUE)
   source("simulation_batchtools/R/censoring_calibration.R", local = TRUE)
-  design <- load_or_calibrate_censoring(
-    design, make_input, calibration_file,
-    n_pilot = n_calibration, seed = calibration_seed
+  design <- calibrate_design(
+    design = design,
+    make_input = make_input,
+    n_calibration = n_calibration,
+    seed = calibration_seed
   )
   if (action == "calibrate") return(invisible(list(design = design, config = config)))
 

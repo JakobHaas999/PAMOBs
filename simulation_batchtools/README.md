@@ -18,9 +18,7 @@ simulation_batchtools/
   R/
   analysis/
   registries/<phase>/<run_id>/
-  results/
-    calibration/
-    <phase>/<run_id>/
+  results/<phase>/<run_id>/
 ```
 
 ## Settings and paired df comparisons
@@ -80,7 +78,7 @@ Rscript simulation_batchtools/runs/pilot/level_shift_scenarios_pilot.R
 ```
 
 Equivalently, after sourcing its file, call `run_null_scenarios_pilot()` or
-`run_level_shift_scenarios_pilot()`. These calls calibrate if needed, create the
+`run_level_shift_scenarios_pilot()`. These calls calibrate censoring, create the
 registry, then run jobs with two workers by default. They block until completion.
 
 After reviewing the pilot, start the corresponding main study:
@@ -92,25 +90,31 @@ Rscript simulation_batchtools/runs/main/level_shift_scenarios_main.R
 
 ## Censoring calibration
 
-Calibration is part of the run workflow. It is saved under
-`results/calibration/null_scenarios.rds` or
-`results/calibration/level_shift_scenarios.rds`, and reused by pilot and main.
-To perform only calibration, pass `calibrate` instead of `prepare`.
+Calibration is computed by `calibrate_design()` whenever a run starts. The
+function adds `lambda_c` to the design; no calibration files are loaded or saved.
+To obtain a calibrated design without starting jobs, call the entry function
+with `action = "calibrate"`, for example:
+
+```r
+source("simulation_batchtools/runs/pilot/null_scenarios_pilot.R")
+study <- run_null_scenarios_pilot(action = "calibrate")
+head(study$design)
+```
 
 The calibration uses 50,000 subjects for each population: six null populations
 or 24 level-shift populations. It targets total censoring, including
-administrative censoring. Infeasible targets cause an error.
+administrative censoring. Rates are shared across all df values, sample sizes
+and repetitions of the same population and censoring target.
 
-Calibration matches exact data-generating parameters and censoring targets.
-Changing df, sample size or model options does not require new calibration.
-Changed hazard/covariate parameters, targets, calibration sample size or seed
-require a compatible new calibration file; incompatible caches are never
-silently overwritten. Old null caches containing only setting IDs lack the
-metadata required for automatic reuse.
+Populations are grouped by `scenario`, `covariate_setting` and `delta`. This
+assumes that baseline parameters, covariate effects, `tau` and `admin_time` are
+fixed within each group, as in the current runs. If these parameters are varied,
+include them in the grouping as well.
 
-The existing level-shift calibration can be migrated without resimulating
-events when all population parameters match. The old population-to-seed mapping
-is retained when using such a cache.
+Pilot and main recompute calibration using the same population order, seed and
+calibration sample size. With the same generating settings and R environment,
+they therefore obtain the same rates. No separate calibration file needs to be
+transferred when moving a run to the server.
 
 ## Progress on a server
 
@@ -138,5 +142,7 @@ as `success = FALSE` and `error` in results; batchtools can still mark those job
 as done. The runner submits jobs that have not yet been submitted. Interrupted
 jobs already marked as submitted are not automatically resubmitted.
 
-Registries, calibration data and collected results are excluded from Git.
+Registries and collected results are excluded from Git.
 Transfer them separately when moving results between the server and your computer.
+
+Note: AI generated
