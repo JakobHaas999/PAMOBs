@@ -1,5 +1,5 @@
-registry_dir <- "simulation_batchtools/registries/pilot/null_scenario_pilot_v1"
-results_dir <- "simulation_batchtools/results/pilot/null_scenario_pilot_v1"
+registry_dir <- "simulation_batchtools/registries/pilot/null_scenario_pilot_df_v2"
+results_dir <- "simulation_batchtools/results/pilot/null_scenario_pilot_df_v2"
 
 reg <- batchtools::loadRegistry(
   file.dir = registry_dir, writeable = FALSE,
@@ -68,7 +68,7 @@ summary_table <- metrics[,
   by = scenario_columns
 ]
 summary_table <- summary_table[, .(
-  n, censoring_rate, covariate_setting, scenario,
+  n, censoring_rate, covariate_setting, scenario, df,
   n_planned, n_success, n_failed, n_missing,
   rejection_rate, ci_lower, ci_upper, mean_observed_censoring
 )]

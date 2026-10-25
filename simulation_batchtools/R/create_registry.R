@@ -1,9 +1,17 @@
-create_registry <- function(design_file) {
+create_registry <- function(design, config, envir = parent.frame(), registry_dir = NULL) {
+  checkmate::assert_data_frame(design, min.rows = 1L)
   study_env <- new.env(parent = globalenv())
-  sys.source(design_file, envir = study_env)
 
-  config <- study_env$config
-  design <- study_env$design
+  # Copy run-local functions into a small environment. Workers must not depend
+  # on source() having been called in their global environment, nor serialize
+  # the full design once for every function or model formula.
+  for (name in ls(envir = envir, all.names = TRUE)) {
+    value <- get(name, envir = envir, inherits = FALSE)
+    if (is.function(value)) {
+      if (identical(environment(value), envir)) environment(value) <- study_env
+      assign(name, value, envir = study_env)
+    }
+  }
 
   if (!isTRUE(config$phase %in% c("pilot", "main"))) {
     stop("config$phase must be 'pilot' or 'main'.")
@@ -23,8 +31,10 @@ create_registry <- function(design_file) {
     config$prepare_pars(pars)
   })
 
-  registry_root <- file.path("simulation_batchtools", "registries", config$phase)
-  registry_dir <- file.path(registry_root, config$run_id)
+  if (is.null(registry_dir)) {
+    registry_dir <- file.path("simulation_batchtools", "registries", config$phase, config$run_id)
+  }
+  registry_root <- dirname(registry_dir)
   if (file.exists(registry_dir)) {
     stop("Registry already exists: ", registry_dir, ".",
     "\nLoad existing registry or take a new run_id")
