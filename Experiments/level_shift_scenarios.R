@@ -186,5 +186,24 @@ log_hazard <- function(t) {
     log(sigma) -
     pnorm(z, lower.tail = FALSE, log.p = TRUE)
 
-  log_h0 + delta(t >= tau)
+  log_h0 + delta * (t >= tau)
 }
+
+formula <- ~ log_hazard(t)
+
+n_sim <- 50
+n <- 1000
+n_pilot <- 10000
+
+seeds <- 1903L + seq_len(n_sim)
+calibration_seed <- 6
+
+admin_time <- 10
+censoring_rate <- 0.3
+interval <- c(1e-8, 30)
+
+results_3 <- run_simulation(
+  n_sim, n, n_pilot, seeds, calibration_seed,
+  formula, tau, admin_time, censoring_rate, interval,
+  df = 5
+)

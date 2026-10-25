@@ -32,7 +32,7 @@
 #'   \item{split_var}{Selected partitioning variable, or NULL if no split
 #'     was performed.}
 #' }
-PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05,
+PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
                      maxdepth = 2, adjusting_method = "bonferroni") {
   if (maxdepth > 2) stop("Not supported yet.")
 
@@ -47,11 +47,9 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05,
   )
 
   # Transform to PED
-  ped <- pammtools::as_ped(
-    data = data,
-    formula = ped_formula,
-    id = "id"
-  )
+  ped_args <- list(data = data, formula = ped_formula, id = "id")
+  if (!is.null(cut)) ped_args$cut <- cut
+  ped <- do.call(pammtools::as_ped, ped_args)
 
   # Build the node-model formula
   model_formula <- formula(f, lhs = 1, rhs = 1)
