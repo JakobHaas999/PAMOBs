@@ -9,11 +9,9 @@ simulation_batchtools/
   runs/
     pilot/
       null_scenarios_pilot.R
-      level_shift_scenarios_pilot.R
       pemtree_quadratic_pilot.R
     main/
       null_scenario_main.R
-      level_shift_scenarios_main.R
       pemtree_quadratic_main.R
   R/
   analysis/
@@ -27,7 +25,7 @@ Edit the settings near the top of the corresponding run function:
 `dfs`, `n_rep`, `ncpus`, `run_id`, the scenario table and the factorial grid.
 Use the same scientific settings and df grid in pilot and main.
 
-Null and level-shift studies currently use `dfs <- c(4L, 6L, 8L)`.
+The null study currently uses `dfs <- c(4L, 6L, 8L)`.
 These are unpenalized cubic B-spline basis dimensions in `splines::bs()`.
 Each simulated sample is fitted with every df. `dgp_id` identifies the data
 condition, `setting_id` additionally distinguishes df, and the seed depends on
@@ -37,16 +35,14 @@ are a subset of main seeds for the same study configuration.
 | Study | Data conditions | df values | Pilot repetitions | Pilot fits | Main repetitions | Main fits |
 |---|---:|---:|---:|---:|---:|---:|
 | Null | 36 | 3 | 5 | 540 | 1,000 | 108,000 |
-| Level shift | 144 | 3 | 100 | 43,200 | 1,000 | 432,000 |
 
-Both studies combine cubic, Weibull and lognormal baseline hazards with
+The null study combines cubic, Weibull and lognormal baseline hazards with
 `n = c(500L, 1000L)`, total-censoring targets 0.3/0.5/0.7 and conditions
-without/with covariates. Follow-up ends at 10. The level-shift study additionally
-crosses hazard factors 1.25/1.5/2/3 (`delta = log(factor)`), with a jump at 5.
+without/with covariates. Follow-up ends at 10, and `delta = 0` throughout.
 Covariate effects are 0.3 for standard-normal x1 and 0.5 for Bernoulli(0.5) x2.
 
 The older quadratic study retains its original settings and run IDs.
-The new null and level-shift registries use names ending in `_df_v2`.
+The null registries use names ending in `_df_v2`.
 Choose a new run ID when changing an existing study. Resuming a registry with a
 different saved job design is rejected; changes to function implementations also
 require a new run ID.
@@ -63,29 +59,26 @@ head(study$design)
 table(study$design$df)
 ```
 
-From a terminal, preview either study:
+From a terminal, preview the null study:
 
 ```bash
 Rscript simulation_batchtools/runs/pilot/null_scenarios_pilot.R prepare
-Rscript simulation_batchtools/runs/pilot/level_shift_scenarios_pilot.R prepare
 ```
 
-Start one pilot study:
+Start the null pilot study:
 
 ```bash
 Rscript simulation_batchtools/runs/pilot/null_scenarios_pilot.R
-Rscript simulation_batchtools/runs/pilot/level_shift_scenarios_pilot.R
 ```
 
-Equivalently, after sourcing its file, call `run_null_scenarios_pilot()` or
-`run_level_shift_scenarios_pilot()`. These calls calibrate censoring, create the
-registry, then run jobs with two workers by default. They block until completion.
+Equivalently, after sourcing its file, call `run_null_scenarios_pilot()`. This
+calibrates censoring, creates the registry, then runs jobs with two workers by
+default. The call blocks until completion.
 
 After reviewing the pilot, start the corresponding main study:
 
 ```bash
 Rscript simulation_batchtools/runs/main/null_scenario_main.R
-Rscript simulation_batchtools/runs/main/level_shift_scenarios_main.R
 ```
 
 ## Censoring calibration
@@ -101,8 +94,8 @@ study <- run_null_scenarios_pilot(action = "calibrate")
 head(study$design)
 ```
 
-The calibration uses 50,000 subjects for each population: six null populations
-or 24 level-shift populations. It targets total censoring, including
+The calibration uses 50,000 subjects for each of the six null populations.
+It targets total censoring, including
 administrative censoring. Rates are shared across all df values, sample sizes
 and repetitions of the same population and censoring target.
 
@@ -125,7 +118,7 @@ From a second R session in the same project directory:
 reg_view <- batchtools::loadRegistry(
   file.dir = paste0(
     "simulation_batchtools/registries/main/",
-    "level_shift_scenario_main_df_v2"
+    "null_scenario_main_df_v2"
   ),
   writeable = FALSE, conf.file = NA, make.default = FALSE
 )
