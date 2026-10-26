@@ -4,7 +4,6 @@ calibrate_design <- function(
   n_calibration = 50000L,
   seed = 900000L
 ) {
-  # Gleiche Population: gleiche Baseline, Kovariaten und Sprunggröße.
   population <- interaction(
     design$scenario,
     design$covariate_setting,
@@ -26,7 +25,6 @@ calibrate_design <- function(
     message("Calibrating population ", i, "/", length(groups))
     set.seed(seed + i)
 
-    # Große Stichprobe für diese Population simulieren.
     input <- make_input(pars, n = n_calibration)
 
     events <- sim_event_times(
@@ -37,7 +35,6 @@ calibrate_design <- function(
       interval = c(1e-8, 1.01 * pars$admin_time)
     )
 
-    # Für jedes Zensierungsziel eine Rate bestimmen.
     targets <- unique(design$censoring_rate[rows])
 
     rates <- vapply(
@@ -52,7 +49,6 @@ calibrate_design <- function(
       numeric(1)
     )
 
-    # Raten allen passenden Jobs zuordnen.
     design$lambda_c[rows] <- rates[
       match(design$censoring_rate[rows], targets)
     ]
