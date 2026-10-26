@@ -132,7 +132,7 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
     })
     names(models) <- groups
   } else {
-    list(root = fill)
+    list(root = fit)
   }
   list(
     models = models,
