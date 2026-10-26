@@ -74,27 +74,43 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
   n_persons <- length(person_ids)
   perm_ind <- replicate(n_perm, sample.int(n_persons))
 
-  # Test each split variable
+  # Calculate scores
+  scores <- sandwich::estfun(fit)
+
+  J <- crossprod(scores) / nrow(scores)
+  J_inv <- chol2inv(chol(J))
+
+  # Aggregate scores
+  agg_scores <- rowsum(scores, group = person_index, reorder = FALSE)
+  # Count PED rows per subject
+  agg_rows <- matrix(tabulate(person_index, nbins = n_persons), ncol = 1)
+
+  lm_uo <- function(z_g) {
+    group_scores <- rowsum(agg_scores, group = z_g, reorder = FALSE)
+    group_sizes <- rowsum(agg_rows, group = z_g, reorder = FALSE)[, 1]
+    quadratic_forms <- rowSums(
+      (group_scores %*% J_inv) * group_scores
+    )
+
+    sum(quadratic_forms / group_sizes)
+  }
+
   p_vals <- setNames(numeric(length(split_vars)), split_vars)
-  statistics <- setNames(numeric(length(split_vars)), split_vars)
+  stats <- setNames(numeric(length(split_vars)), split_vars)
 
   for (var in split_vars) {
-    z <- factor(ped[[var]])
-    z_person <- z[first_rows]
-
-    test <- strucchange::sctest(fit, order.by = z, functional = "LMuo")
-    stat <- unname(test$statistic)
-    statistics[var] <- stat
+    z_g <- factor(ped[[var]])[first_rows]
+    stat <- lm_uo(z_g)
+    stats[[var]] <- stat
 
     perm_stats <- vapply(seq_len(n_perm), function(b) {
-      z_perm_person <- z_person[perm_ind[, b, drop = TRUE]]
-      z_perm_row <- z_perm_person[person_index]
-
-      perm_test <- strucchange::sctest(fit, order.by = z_perm_row, functional = "LMuo")
-      unname(perm_test$statistic)
+      z_perm_g <- z_g[perm_ind[, b]]
+      lm_uo(z_perm_g)
     }, numeric(1))
 
-    p_vals[var] <- (1 + sum(perm_stats >= stat)) / (n_perm + 1)
+    p_vals[var] <- (
+      1 + sum(perm_stats >= stat)
+    ) / (n_perm + 1)
   }
 
   p_adjusted <- p.adjust(p_vals, method = adjusting_method)
@@ -105,8 +121,8 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
     split_values <- factor(ped[[best_var]])
     groups <- levels(split_values)
 
-    models <- lapply(groups, function(group) {
-      node_data <- ped[split_values == group, , drop = FALSE]
+    models <- lapply(groups, function(g) {
+      node_data <- ped[split_values == g, , drop = FALSE]
       glm(
         formula = model_formula,
         family = poisson(link = "log"),
@@ -116,9 +132,8 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
     })
     names(models) <- groups
   } else {
-    models <- list(root = fit)
+    list(root = fill)
   }
-
   list(
     models = models,
     root_model = fit,
@@ -130,7 +145,7 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
   )
 }
 
-## Example call
+# Example call
 # set.seed(123)
 # rate <- 0.05
 # shape <- 1.5
@@ -166,7 +181,7 @@ PErMtree <- function(formula, data, n_perm = 999L, alpha = 0.05, cut = NULL,
 # res <- PErMtree(
 #   formula = Surv(time, status) ~ bs(tend, df = 6) + x + offset(offset) | z1 + z2,
 #   data = sim_data,
-#   n_perm = 100L
+#   n_perm = 199L
 # )
 #
 # res$p_vals
