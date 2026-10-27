@@ -1,5 +1,5 @@
-registry_dir <- "simulation_batchtools/registries/pilot/level_shift_pilot_df_v2"
-results_dir <- "simulation_batchtools/results/pilot/level_shift_pilot_df_v2"
+registry_dir <- "simulation_batchtools/registries/pilot/level_shift_pilot_df_v4"
+results_dir <- "simulation_batchtools/results/pilot/level_shift_pilot_df_v4"
 
 reg <- batchtools::loadRegistry(
   file.dir = registry_dir, writeable = FALSE,
@@ -40,12 +40,20 @@ summary_table <- metrics[,
     n_ok <- sum(ok)
     n_splits <- sum(split_detected[ok])
 
-    rejection_rate <- if (n_ok) n_splits / n_ok else NA_real_
+    power <- if (n_ok) n_splits / n_ok else NA_real_
 
     ci <- if (n_ok) {
       binom.test(n_splits, n_ok, p = 0.05)$conf.int
     } else {
       c(NA_real_, NA_real_)
+    }
+
+    has_tau <- ok & (split_detected %in% TRUE) & is.finite(tau_hat)
+
+    mean_tau_hat <- if (any(has_tau)) {
+      mean(tau_hat[has_tau])
+    } else {
+      NA_real_
     }
 
     list(
@@ -55,11 +63,16 @@ summary_table <- metrics[,
       n_failed = sum(completed & !ok),
       n_missing = sum(!completed),
       n_splits = n_splits,
-      rejection_rate = rejection_rate,
+      power = power,
       ci_lower = ci[1],
       ci_upper = ci[2],
+      has_tau = sum(has_tau),
+      mean_tau_hat = mean_tau_hat,
       mean_observed_censoring = if (n_ok) mean(observed_censoring[ok]) else NA_real_
     )
   },
   by = scenario_columns
 ]
+
+print(summary_table)
+

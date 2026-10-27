@@ -142,3 +142,6 @@ p <- ggplot(
   )
 
 print(p)
+
+# Plot cubic and weibull hazard with df = 6
+summary_table <- subset(summary_table, (df == 6) & (scenario %in% c("cubic", "weibull")))

@@ -22,6 +22,7 @@ run_level_shift_main <- function(action = c("run", "prepare", "calibrate")) {
     meanlog = c(NA_real_, NA_real_, log(6)),
     sdlog = c(NA_real_, NA_real_, 0.7)
   )
+  scenarios <- subset(scenarios, scenario %in% c("cubic", "weibull"))
 
   settings <- expand.grid(
     scenario_id = scenarios$scenario_id,
@@ -36,7 +37,7 @@ run_level_shift_main <- function(action = c("run", "prepare", "calibrate")) {
     settings,
     scenarios[match(settings$scenario_id, scenarios$scenario_id), setdiff(colnames(scenarios), "scenario_id"), drop = FALSE]
   )
-  settings$tau <- 5
+  settings$tau <- 3
   settings$admin_time <- 10
   settings$gamma1 <- 0.3
   settings$gamma2 <- 0.5
