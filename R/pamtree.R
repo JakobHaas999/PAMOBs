@@ -243,9 +243,9 @@ pamtree <- function(
 }
 
 
-# ## Example call
-# # Simulated some data with a structural change
-# n <- 2000
+## Example call
+# Simulated some data with a structural change
+# n <- 1000
 # shape <- 1.5
 # rate <- 0.05
 #
@@ -256,7 +256,6 @@ pamtree <- function(
 # data <- data.frame(id = 1:n)
 #
 # admin_time <- 10
-# censoring_rate <- 0.3
 #
 # set.seed(1827)
 # sim_data <- sim_surv(
@@ -264,7 +263,7 @@ pamtree <- function(
 #   data = data,
 #   breaks = tau,
 #   admin_time = admin_time,
-#   censoring_rate = censoring_rate
+#   lambda_c = 0.02
 # )
 #
 # # Fit the tree
@@ -276,3 +275,107 @@ pamtree <- function(
 #   maxdepth = 2,
 #   alpha = 0.05
 # )
+
+# Function that combines a pamtree with grid search to estimate the smoothing parameter
+pam_grid_search <- function(
+  formula,
+  data,
+  cut = NULL,
+  sp_space,
+  method = c("holdout", "cv"),
+  validation_percent,
+  folds = NULL,
+  gam_method = "REML"
+) {
+  method <- match.arg(method)
+  checkmate::assert_formula(formula)
+  checkmate::assert_data_frame(data)
+
+  f <- Formula::Formula(formula)
+
+  # Construct model formula
+  node_formula <- formula(f, lhs = 1, rhs = 1)
+  node_formula[[2]] <- quote(ped_status)
+
+  # Construct ped formula
+  response <- f[[2]]
+  variables <- intersect(all.vars(f), colnames(data))
+  ped_formula <- reformulate(
+    setdiff(variables, all.vars(response)),
+    response = deparse(response),
+    env = environment(formula)
+  )
+
+  # PED transformation
+  ped_args <- list(data = data, formula = ped_formula, id = "id")
+  if (!is.null(cut)) ped_args$cut <- cut
+  ped <- do.call(pammtools::as_ped, ped_args)
+
+  ids <- unique(ped$id)
+  n <- length(ids)
+
+  if (method == "holdout") {
+    stopifnot(validation_percent > 0 && validation_percent < 1)
+    n_valid <- floor(n * validation_percent)
+    validation_ids <- list(ids[sample.int(n, n_valid)])
+  } else {
+    checkmate::assert_int(folds, lower = 2, upper = n)
+    fold_id <- sample(rep(seq_len(folds), length.out = n))
+
+    validation_ids <- lapply(seq_len(folds), function(k) {
+      ids[fold_id == k]
+    })
+  }
+
+  loss <- matrix(Inf, nrow = length(sp_space), ncol = length(validation_ids))
+
+  for (k in seq_along(validation_ids)) {
+    is_valid <- ped$id %in% validation_ids[[k]]
+    train <- ped[!is_valid, , drop = FALSE]
+    test <- ped[is_valid, , drop = FALSE]
+
+    for (j in seq_along(sp_space)) {
+      loss[j, k] <- tryCatch(
+        {
+          fit <- mgcv::gam(
+            node_formula,
+            data = train,
+            family = poisson(),
+            sp = sp_space[[j]],
+            method = gam_method
+          )
+
+          if (!isTRUE(fit$converged)) {
+            stop("GAM did not converge")
+          }
+
+          mu <- predict(fit, newdata = test, type = "response")
+          value <- -sum(dpois(test$ped_status, lambda = mu, log = TRUE))
+
+          if (is.finite(value)) value else Inf
+        },
+        error = function(e) {
+          warning(sprintf("sp = %g, split = %d: %s", sp_space[[j]], k, conditionMessage(e)), call. = FALSE)
+          Inf
+        }
+      )
+    }
+  }
+
+  grid_results <- data.frame(
+    sp = sp_space,
+    validation_loss = rowSums(loss) / sum(lengths(validation_ids))
+  )
+
+  if (!any(is.finite(grid_results$validation_loss))) {
+    stop("No smoothing parameter could be evaluated on every fold.")
+  }
+
+  best_sp <- sp_space[which.min(grid_results$validation_loss)]
+
+  list(
+    selected_sp = best_sp,
+    grid_results = grid_results,
+    validation_ids = validation_ids
+  )
+}
