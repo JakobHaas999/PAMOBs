@@ -1,5 +1,5 @@
-registry_dir <- "simulation_batchtools/registries/pilot/level_shift__pilot_df_v1"
-results_dir <- "simulation_batchtools/results/pilot/level_shift__pilot_df_v1"
+registry_dir <- "simulation_batchtools/registries/pilot/level_shift_pilot_df_v2"
+results_dir <- "simulation_batchtools/results/pilot/level_shift_pilot_df_v2"
 
 reg <- batchtools::loadRegistry(
   file.dir = registry_dir, writeable = FALSE,

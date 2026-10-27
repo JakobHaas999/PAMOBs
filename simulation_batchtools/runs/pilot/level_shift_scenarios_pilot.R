@@ -6,7 +6,7 @@ run_level_shift_pilot <- function(action = c("run", "prepare", "calibrate")) {
   dfs <- c(4L, 6L, 8L)
   n_rep <- 5L
   ncpus <- 2L
-  run_id <- "level_shift__pilot_df_v2"
+  run_id <- "level_shift_pilot_df_v2"
   n_calibration <- 50000L
   calibration_seed <- 900001L
 
