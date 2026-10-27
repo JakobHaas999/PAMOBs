@@ -7,13 +7,7 @@ reg <- batchtools::loadRegistry(
 )
 job_design <- readRDS(file.path(reg$file.dir, "job_design.rds"))
 
-metrics <- data.table::data.table(
-  job.id = integer(), success = logical(), error = character(),
-  split_detected = logical(), n_terminal_nodes = integer(),
-  tau_hat = numeric(), abs_tau_error = numeric(),
-  observed_censoring = numeric()
-)
-done_ids <- batchtools::findDone(reg = reg)
+cm
 
 if (nrow(done_ids)) {
   collected <- batchtools::reduceResultsDataTable(ids = done_ids, reg = reg)

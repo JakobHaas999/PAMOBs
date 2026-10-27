@@ -87,7 +87,7 @@ formula <- ~ log_hazard(t)
 
 n_sim <- 50
 n_obs <- 1000
-n_pilot <- 10000
+n_pilot <- 10000...............
 
 seeds <- 8L + seq_len(n_sim)
 calibration_seed <- 4
@@ -173,20 +173,15 @@ cat("Scenario 2 RMSE:", rmse_tau_2, "\n")
 
 
 ## Scenario 3 ----------------------------------------------------------------
-mu <- 1.5
-sigma <- 0.7
+meanlog <- log(6)
+sdlog <- 0.7
 tau <- 5
 delta <- log(3)
 
 log_hazard <- function(t) {
-  z <- (log(t) - mu) / sigma
-
-  log_h0 <- dnorm(z, log = TRUE) -
-    log(t) -
-    log(sigma) -
-    pnorm(z, lower.tail = FALSE, log.p = TRUE)
-
-  log_h0 + delta * (t >= tau)
+  dlnorm(t, meanlog = meanlog, sdlog = sdlog, log = TRUE) -
+    plnorm(t, meanlog = meanlog, sdlog = sdlog, lower.tail = FALSE, log.p = TRUE) +
+    delta * (t >= tau)
 }
 
 formula <- ~ log_hazard(t)
@@ -207,3 +202,25 @@ results_3 <- run_simulation(
   formula, tau, admin_time, censoring_rate, interval,
   df = 5
 )
+
+power_3 <- results_3$power
+cat("Scenario 3 power: ", power_3, "\n")
+
+summary(results_3$tau_hats)
+hist(
+  results_3$tau_hats,
+  breaks = 20,
+  main = "Estimated change points - Lognormal hazard",
+  xlab = expression(hat(tau))
+)
+abline(v = tau, col = "red", lwd = 2)
+
+## Bias and RMSE
+tau_hat <- na.omit(results_3$tau_hats)
+bias_tau_3 <- mean(tau_hat - tau)
+rmse_tau_3 <- sqrt(mean((tau_hat - tau)^2))
+cat("Scenario 3 Bias:", bias_tau_3, "\n")
+cat("Scenario 3 RMSE:", rmse_tau_3, "\n")
+
+
+

@@ -6,7 +6,7 @@ run_level_shift_pilot <- function(action = c("run", "prepare", "calibrate")) {
   dfs <- c(4L, 6L, 8L)
   n_rep <- 5L
   ncpus <- 2L
-  run_id <- "level_shift__pilot_df_v1"
+  run_id <- "level_shift__pilot_df_v2"
   n_calibration <- 50000L
   calibration_seed <- 900001L
 
@@ -19,7 +19,7 @@ run_level_shift_pilot <- function(action = c("run", "prepare", "calibrate")) {
     beta3 = c(0.001, NA_real_, NA_real_),
     shape = c(NA_real_, 1.5, NA_real_),
     rate = c(NA_real_, 0.05, NA_real_),
-    meanlog = c(NA_real_, NA_real_, log(3)),
+    meanlog = c(NA_real_, NA_real_, log(6)),
     sdlog = c(NA_real_, NA_real_, 0.7)
   )
 

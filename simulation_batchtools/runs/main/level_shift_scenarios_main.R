@@ -19,7 +19,7 @@ run_level_shift_main <- function(action = c("run", "prepare", "calibrate")) {
     beta3 = c(0.001, NA_real_, NA_real_),
     shape = c(NA_real_, 1.5, NA_real_),
     rate = c(NA_real_, 0.05, NA_real_),
-    meanlog = c(NA_real_, NA_real_, log(3)),
+    meanlog = c(NA_real_, NA_real_, log(6)),
     sdlog = c(NA_real_, NA_real_, 0.7)
   )
 
