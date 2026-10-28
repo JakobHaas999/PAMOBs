@@ -54,7 +54,7 @@ k <- 0
 for (j in seq_along(deltas)) {
   delta <- deltas[j]
   current_lambda_c <- lambda_c[j]
-  cat("\n\n\nRunning simulations for delta =", exp(delta), "\n\n")
+  cat("\n\n\nRunning simulations for hazard ratio =", exp(delta), "\n\n")
 
   for (i in seq_len(n_sim)) {
     cat("Simulation", i, "of", n_sim, "\n")
@@ -94,17 +94,24 @@ for (j in seq_along(deltas)) {
           p <- unname(root_p)
         }
         split <- length(nodeids(fit$tree, terminal = TRUE)) > 1
+        if (split) {
+          tau_hat <- breaks_split(split_node(root))
+        }
       }
 
 
       results[[k]] <- data.frame(
-        reep = i,
-        seeds = seeds[i, j],
+        rep = i,
+        seed = seeds[i, j],
+        delta = delta,
+        hazard_ratio = exp(delta),
         model = model_name,
         success = success,
         error = if (success) NA_character_ else conditionMessage(fit),
         root_p_value = p,
         split_detected = split,
+        tau = tau,
+        tau_hat = tau_hat,
         observed_censoring = mean(sim_data$status == 0)
       )
     }

@@ -92,3 +92,9 @@ for (i in seq_len(n_sim)) {
 
 results <- do.call(rbind, results)
 rownames(results) <- NULL
+## Save
+results_dir <- "Experiments/Results"
+dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
+readRDS(results, file.path(results_dir, "weibull_null_scenarios.rds"))
+
+## Analysis of resuöts
