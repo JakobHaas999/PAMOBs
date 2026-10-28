@@ -137,7 +137,7 @@ seeds_2 <- 24 + seq_len(n_sim)
 
 tau_hats_2 <- vector("list", n_sim)
 n_splits_2 <- integer(n_sim)
-trees <- vector("list", n_sim)
+trees_2 <- vector("list", n_sim)
 
 fit_cut <- seq(0, admin_time, by = 0.1)
 
@@ -159,4 +159,32 @@ for (i in seq_len(n_sim)) {
   )
 
   cat("Observed censoring:", mean(sim_data$status == 0), "\n")
+
+  tree_fit <- pemtree(
+    formula = Surv(time, status) ~ bs(tend, df = 6) + x1 + x2 + offset(offset) | tend,
+    data = sim_data,
+    cut = fit_cut,
+    maxdepth = 3,
+    alpha = 0.05
+  )
+
+  tree <- tree_fit$tree
+
+  inner_ids <- setdiff(nodeids(tree), nodeids(tree, terminal = TRUE))
+  tau_hats_2[[i]] <- if (length(inner_ids)) {
+    sort(unlist(nodeapply(
+      tree,
+      ids = inner_ids,
+      FUN = function(node) {
+        breaks_split(split_node(node))
+      }
+    ), use.names = FALSE))
+  } else {
+    numeric(0)
+  }
+
+  n_splits_2[[i]] <- length(tau_hats_2[[i]])
+  trees_2[[i]] <- tree
 }
+
+table(n_splits_2)
