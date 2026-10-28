@@ -10,7 +10,7 @@ source("R/pemtree_splines.R")
 ## 3 scenarios --------------------------------------------
 ## Scenario 1: simple covariate changing effect
 ## Scenario 2: Two covariate changing effects
-## Scenario 3: Two covariates have an changing effect
+## Scenario 3: Two covariates and only one has a changing effect
 
 
 ## Global parameters
@@ -188,3 +188,86 @@ for (i in seq_len(n_sim)) {
 }
 
 table(n_splits_2)
+
+## Scenario 3 --------------------------------------------
+
+log_hazard0 <- function(t) {
+  log(shape) + log(rate) + (shape - 1) * log(t)
+}
+
+tau1 <- 3
+tau2 <- 5
+breaks_3 <- c(tau1, tau2)
+
+delta1 <- 0.6
+delta2 <- 0
+
+beta1 <- 0.4
+beta2 <- 0.6
+
+formula_3 <- ~ log_hazard0(t) + beta1 * x1 +
+  beta2 * x2 +
+  delta1 * x1 * (t >= tau1) +
+  delta2 * x2 * (t >= tau2)
+
+# Calibration
+set.seed(3)
+data_pilot <- data.frame(
+  id = seq_len(n_pilot),
+  x1 = rnorm(n_pilot),
+  x2 = runif(n_pilot, -1, 1)
+)
+event_times_pilot <- sim_event_times(formula_3, data_pilot, breaks_3)
+lambda_c <- calibrate_censoring(event_times_pilot, censoring_rate, admin_time)
+
+tau_hats_3 <- vector("list", n_sim)
+n_splits_3 <- integer(n_sim)
+trees_3 <- vector("list", n_sim)
+
+fit_cut <- seq(0, admin_time, by = 0.1)
+
+seeds_3 <- 2352 + seq_len(n_sim)
+for (i in seq_len(n_sim)) {
+  cat("\n\nRunning simulation", i, "with seed", seeds_3[i], "\n")
+  set.seed(seeds_3[i])
+
+  data <- data.frame(
+    id = seq_len(n_obs),
+    x1 = rnorm(n_obs),
+    x2 = runif(n_obs, -1, 1)
+  )
+  sim_data <- sim_surv(
+    formula = formula_3,
+    data = data,
+    breaks = breaks_3,
+    admin_time = admin_time,
+    lambda_c = lambda_c
+  )
+
+  cat("Observed censoring:", mean(sim_data$status == 0), "\n")
+
+  tree_fit <- pemtree(
+    formula = Surv(time, status) ~ bs(tend, df = 6) + x1 + x2 + offset(offset) | tend,
+    data = sim_data,
+    cut = fit_cut,
+    maxdepth = 3,
+    alpha = 0.05
+  )
+
+  tree <- tree_fit$tree
+  trees_3[[i]] <- tree
+  inner_ids <- setdiff(nodeids(tree), nodeids(tree, terminal = TRUE))
+  tau_hats_3[[i]] <- if (length(inner_ids)) {
+    sort(unlist(nodeapply(
+      tree,
+      ids = inner_ids,
+      FUN = function(node) {
+        breaks_split(split_node(node))
+      }
+    ), use.names = FALSE))
+  } else {
+    numeric(0)
+  }
+  n_splits_3[[i]] <- length(tau_hats_3[[i]])
+}
+
