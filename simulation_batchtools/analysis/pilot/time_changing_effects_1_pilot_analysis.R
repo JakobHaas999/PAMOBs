@@ -65,7 +65,7 @@ summary_table_shift <- metrics[delta != 0,
     ci <- if (n_ok) binom.test(n_splits, n_ok)$conf.int else c(NA_real_, NA_real_)
 
     mean_tau_hat <- if (n_splits > 0) mean(tau_hat, na.rm = TRUE) else NA_real_
-    mean_abs_tau_error <- mean(abs_tau_error, na.rm = TRUE)
+    mean_abs_tau.error <- if (n_splits) mean(abs_tau_error, na.rm = TRUE) else NA_real_
 
     list(
       n_planned = .N,
