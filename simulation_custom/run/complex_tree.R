@@ -102,7 +102,7 @@ lambda_c <- calibrate_censoring(
 seeds <- 7100 + seq_len(n_sim)
 
 run_rep <- function(i) {
-  message("Simulation ", i, " of", n_sim, " started")
+  message("Simulation ", i, " of ", n_sim, " started")
   set.seed(seeds[i])
 
   sim_data <- sim_surv(
@@ -142,7 +142,7 @@ run_rep <- function(i) {
     tree <- fit$tree
     splits <- extract_splits(node_party(tree), names(tree$data))
     if (is.null(splits)) {
-      splits <- data.frame(path = character(0), variable = character(0), break_point = character(0))
+      splits <- data.frame(path = character(0), variable = character(0), break_point = numeric(0))
     }
 
     nodes <- merge(true_splits, splits, by = "path", suffixes = c("_true", "_est"), all.x = TRUE)
@@ -154,7 +154,7 @@ run_rep <- function(i) {
     summary$exact_structure <- nrow(splits) == nrow(true_splits) && all(nodes$variable_correct)
     summary$noise_selected <- any(splits$variable %in% c("z4", "z5", "z6"))
 
-    splits$rep <- i
+    splits$rep <- rep(i, nrow(splits))
     nodes$rep <- i
   }
 
@@ -201,4 +201,4 @@ results <- list(
 
 results_dir <- "simulation_custom/results"
 dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
-saveRDS(results, file.path(results, "complex_tree.rds"))
+saveRDS(results, file.path(results_dir, "complex_tree.rds"))
