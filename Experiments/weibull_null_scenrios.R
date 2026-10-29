@@ -98,3 +98,27 @@ dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 saveRDS(results, file.path(results_dir, "weibull_null_scenarios.rds"))
 
 ## Analysis of results
+results <- readRDS(file.path(results_dir, "weibull_null_scenarios.rds"))
+# Create a summary table
+results <- data.table::as.data.table(results)
+summary <- results[, {
+  ok <- success %in% TRUE &
+    is.finite(root_p_value)
+  n_ok <- sum(ok)
+  n_splits <- sum(split_detected[ok])
+  rejection_rate <- if (n_ok) n_splits / n_ok else NA_real_
+  ci <- if (n_ok) binom.test(n_splits, n_ok)$conf.int else c(NA_real_, NA_real_)
+
+  list(
+    n_planned= .N, n_success = n_ok, n_split = n_splits,
+    rejection_rate = rejection_rate, ci_lower = ci[1], ci_upper = ci[2]
+  )
+}, by = "model"]
+
+# Plot the results
+summary$model <- factor(summary$model)
+ggplot(summary, aes(x = model, y = rejection_rate, colour = model)) +
+  geom_hline(yintercept = 0.05, colour = "grey65", linetype = "dashed") +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper)) +
+  theme_bw()
