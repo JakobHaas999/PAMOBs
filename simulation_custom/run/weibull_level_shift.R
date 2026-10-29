@@ -121,6 +121,6 @@ for (j in seq_along(deltas)) {
 results <- do.call(rbind, results)
 rownames(results) <- NULL
 # Save results
-results_dir <- "Experiments/Results"
+results_dir <- "simulation_custom/results"
 dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 saveRDS(results, file.path(results_dir, "weibul_level_shift.rds"))

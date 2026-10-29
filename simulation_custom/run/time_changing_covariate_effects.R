@@ -108,7 +108,7 @@ for (i in seq_len(n_sim)) {
   trees_1[[i]] <- strip_tree(tree_fit$tree)
 }
 hazards_1 <- do.call(rbind, hazards_1)
-results_dir <- "Experiments/Results"
+results_dir <- "simulation_custom/results"
 dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 saveRDS(
   list(trees = trees_1, hazards = hazards_1, seeds = seeds_1),

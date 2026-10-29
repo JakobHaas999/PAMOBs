@@ -54,8 +54,6 @@ rsconnect/
 # Html fils
 *.html
 
-# Simulation results
-simulation/results/
 # Thesis plots
 thesis_plots
 
@@ -65,4 +63,7 @@ Rplots.pdf
 # Batchtools simulations
 /simulation_batchtools/registries/
 /simulation_batchtools/results/
-Experiments/results/
+
+# Custom simulations
+/simulation_custom/results/
+/simulation_custom/figures/
