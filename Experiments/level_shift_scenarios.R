@@ -87,8 +87,7 @@ formula <- ~ log_hazard(t)
 
 n_sim <- 50
 n_obs <- 1000
-n_pilot <- 10000...............
-
+n_pilot <- 10000
 seeds <- 8L + seq_len(n_sim)
 calibration_seed <- 4
 
