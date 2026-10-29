@@ -77,6 +77,7 @@ seeds_1 <- 1309 + seq_len(n_sim)
 nd <- expand.grid(tend = fit_cut[-1], x1 = c(-1, 0, 1), x2 = 0)
 
 run_one_1 <- function(i) {
+  message("Simulation ", i, " of ", n_sim, " started")
   set.seed(seeds_1[i])
 
   data <- data_frame(
@@ -117,3 +118,6 @@ saveRDS(
   list(trees = trees_1, hazards = hazards_1, seeds = seeds_1),
   file.path(results_dir, "time_changing_effects_1.rds")
 )
+
+## Scenario 1 ----------------------------------------
+## Two covariate changing effects

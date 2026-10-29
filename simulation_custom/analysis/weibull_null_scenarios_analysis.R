@@ -148,7 +148,7 @@ p_ecdf <- ggplot(p_data, aes(x = root_p_value)) +
   )
 p_ecdf
 ggsave(
-  filename = file.path(figure_dir, "weibull_null_comparison.pdf"),
+  filename = file.path(figure_dir, "weibull_null_p_comparison.pdf"),
   plot = p_ecdf,
   width = 8,
   height = 5,
