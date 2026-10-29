@@ -106,18 +106,3 @@ run_one_1 <- function(i) {
     censoring = mean(sim_data$status == 0)
   )
 }
-
-out_1 <- parallel::mclapply(seq_len(n_sim), run_one_1, mc.cores = 2)
-failed <- vapply(out_1, inherits, logical(1), what = "try-error")
-if (any(failed)) stop("Simulations failed: ", paste(which(failed), collapse = ", "))
-
-
-
-dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
-saveRDS(
-  list(trees = trees_1, hazards = hazards_1, seeds = seeds_1),
-  file.path(results_dir, "time_changing_effects_1.rds")
-)
-
-## Scenario 1 ----------------------------------------
-## Two covariate changing effects
