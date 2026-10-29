@@ -30,7 +30,7 @@ run_time_changing_effect_pilot <- function() {
   settings <- expand.grid(
     scenario_id = scenarios$scenario_id,
     delta = seq(0, 0.9, by = 0.3),
-    censoring_rate <- c(0.4, 0.6),
+    censoring_rate = c(0.4, 0.6),
     n = c(250, 500, 1000),
     KEEP.OUT.ATTRS = FALSE,
     stringsAsFactors = FALSE
@@ -94,7 +94,7 @@ run_time_changing_effect_pilot <- function() {
       data = input$data,
       breaks = if (pars$delta == 0) numeric(0) else pars$tau,
       admin_time = pars$admin_time,
-      lambda_c = lambda_c
+      lambda_c = pars$lambda_c
     )
   }
   ## Registry configuration ---------------------------------------
@@ -147,4 +147,7 @@ run_time_changing_effect_pilot <- function() {
     config = config,
     envir = environment()
   )
+}
+if (sys.nframe() == 0L) {
+  run_time_changing_effect_pilot()
 }
