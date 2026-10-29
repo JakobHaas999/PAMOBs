@@ -2,6 +2,7 @@
 source("setup.R")
 source("R/sim_surv.R")
 source("R/pemtree_splines.R")
+results_dir <- "simulation_custom/results"
 
 ## Helper functions ---------------------------------
 strip_tree <- function(tree) {
@@ -36,7 +37,7 @@ predict_hazard <- function(tree, newdata) {
 
 ## Global parameters --------------------------------
 
-n_sim <- 20
+n_sim <- 100
 n_obs <- 1000
 n_pilot <- 10000
 
@@ -73,17 +74,12 @@ event_times_1 <- sim_event_times(
 lambda_c_1 <- calibrate_censoring(event_times_1, censoring_rate, admin_time)
 
 seeds_1 <- 1309 + seq_len(n_sim)
-trees_1 <- vector("list", length = n_sim)
-hazards_1 <- vector("list", n_sim)
-
 nd <- expand.grid(tend = fit_cut[-1], x1 = c(-1, 0, 1), x2 = 0)
 
-
-for (i in seq_len(n_sim)) {
-  cat("\n\nRunning simulation", i, "with seed", seeds_1[i], "\n")
+run_one_1 <- function(i) {
   set.seed(seeds_1[i])
 
-  data <- data.frame(
+  data <- data_frame(
     id = seq_len(n_obs),
     x1 = rnorm(n_obs),
     x2 = runif(n_obs, -1, 1)
@@ -95,7 +91,6 @@ for (i in seq_len(n_sim)) {
     admin_time = admin_time,
     lambda_c = lambda_c_1
   )
-  cat("Observed censoring rate:", mean(sim_data$status == 0), "\n")
 
   tree_fit <- pemtree(
     formula = Surv(time, status) ~ bs(tend, df = 6) + x1 + x2 + offset(offset) | tend,
@@ -104,11 +99,19 @@ for (i in seq_len(n_sim)) {
     maxdepth = 2
   )
 
-  hazards_1[[i]] <- cbind.data.frame(sim = i, predict_hazard(tree_fit$tree, nd))
-  trees_1[[i]] <- strip_tree(tree_fit$tree)
+  list(
+    hazards = cbind.data.frame(sim = i, predict_hazard(tree_fit$tree, nd)),
+    tree = strip_tree(tree_fit$tree),
+    censoring = mean(sim_data$status == 0)
+  )
 }
-hazards_1 <- do.call(rbind, hazards_1)
-results_dir <- "simulation_custom/results"
+
+out_1 <- parallel::mclapply(seq_len(n_sim), run_one_1, mc.cores = 2)
+failed <- vapply(out_1, inherits, logical(1), what = "try-error")
+if (any(failed)) stop("Simulations failed: ", paste(which(failed), collapse = ", "))
+
+
+
 dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 saveRDS(
   list(trees = trees_1, hazards = hazards_1, seeds = seeds_1),

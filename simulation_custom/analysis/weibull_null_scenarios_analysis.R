@@ -80,7 +80,7 @@ p_null <- ggplot(
   labs(
     title = "Splits under the Weibull null scenario",
     subtitle = paste0(
-      "n = ", n_obs,
+      "n = 1000",
       " | 1000 repetitions",
       " | Target censoring = 40%"
     ),
@@ -104,6 +104,52 @@ dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 ggsave(
   filename = file.path(figure_dir, "weibull_null_comparison.pdf"),
   plot = p_null,
+  width = 8,
+  height = 5,
+  units = "in"
+)
+
+# Plot ecdf of p values
+p_data <- results[is.finite(root_p_value) & success %in% TRUE]
+p_data$model <- factor(
+  p_data$model,
+  levels = c("spline_time", "reference_time", "spline_noise", "reference_noise")
+)
+
+p_ecdf <- ggplot(p_data, aes(x = root_p_value)) +
+  geom_abline(
+    intercept = 0, slope = 1,
+    colour = "grey55", linetype = "dashed"
+  ) +
+  stat_ecdf(geom = "step", colour = "#0072B2", linewidth = 0.8) +
+  facet_wrap(
+    ~model,
+    ncol = 2,
+    labeller = labeller(
+      model = c(
+        spline_time = "Spline baseline / Time",
+        reference_time = "Weibull reference / Time",
+        spline_noise = "Spline baseline / Independent covariate",
+        reference_noise = "Weibull reference / Independent covariate"
+      )
+    )
+  ) +
+  scale_color_continuous(limits = c(0, 1)) +
+  scale_y_continuous(limits = c(0, 1), labels = scales::label_percent()) +
+  labs(
+    x = "Root p-value",
+    y = "Cumulative proportion"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(face = "bold"),
+    plot.title = element_text(face = "bold")
+  )
+p_ecdf
+ggsave(
+  filename = file.path(figure_dir, "weibull_null_comparison.pdf"),
+  plot = p_ecdf,
   width = 8,
   height = 5,
   units = "in"

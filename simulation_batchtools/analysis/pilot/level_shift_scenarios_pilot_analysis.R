@@ -75,4 +75,3 @@ summary_table <- metrics[,
 ]
 
 print(summary_table)
-
