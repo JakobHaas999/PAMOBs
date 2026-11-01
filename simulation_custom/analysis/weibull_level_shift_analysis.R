@@ -33,4 +33,3 @@ summary <- results[,
     )
     
 }, by = c("model", "hazard_ratio")]
-summary
