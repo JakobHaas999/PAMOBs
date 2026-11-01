@@ -8,7 +8,7 @@ source("R/sim_surv.R")
 source("R/pamtree.R")
 library("parallel")
 
-n_sim <- 5
+n_sim <- 1000
 n_obs <- 1000
 n_pilot <- 10000
 
@@ -22,7 +22,7 @@ admin_time <- 10
 censoring_rate <- 0.4
 alpha <- 0.05
 
-n_cores <- 2
+n_cores <- 8
 
 log_baseline_hazard <- function(t) log(1.5) + log(0.05) + 0.5 * log(t)
 
@@ -79,7 +79,7 @@ for (d in seq_along(deltas)) {
 
 ## Simulation
 design <- expand.grid(rep = seq_len(n_sim), delta_id = seq_along(deltas))
-design$seed <- 8100 + design$rep
+design$seed <- 18100 + design$rep
 n_jobs <- nrow(design)
 
 run_job <- function(j) {
@@ -102,8 +102,7 @@ run_job <- function(j) {
       cut = fit_cut,
       sp = sp_vals[d],
       maxdepth = 2,
-      alpha = alpha,
-      parm = c("x1", "x2")
+      alpha = alpha
     ),
     error = function(e) e
   )
@@ -155,7 +154,7 @@ run_job <- function(j) {
   )
 }
 
-progress_dir <- tempfile(pattern = "pamtree-time-pilot-")
+progress_dir <- tempfile(pattern = "pamtree-time-main-")
 dir.create(progress_dir)
 start_time <- Sys.time()
 
@@ -167,7 +166,8 @@ results <- mclapply(
 )
 
 worker_errors <- vapply(
-  results, inherits, logical(1), what = "try-error"
+  results, inherits, logical(1),
+  what = "try-error"
 )
 if (any(worker_errors)) {
   print(results[worker_errors])
@@ -190,6 +190,7 @@ dir.create(results_dir, recursive = TRUE, showWarnings = FALSE)
 saveRDS(
   list(
     results = results,
+    design = design,
     calibration = data.frame(delta = deltas, lambda_c = lambda_c_vals, sp = sp_vals),
     settings = list(
       n_sim = n_sim, n_obs = n_obs, beta1 = beta1, beta2 = beta2, tau = tau,
@@ -197,5 +198,5 @@ saveRDS(
       fit_formula = fit_formula
     )
   ),
-  file.path(results_dir, "pamtree_time_changing_effect_pilot.rds")
+  file.path(results_dir, "pamtree_time_changing_effect_main.rds")
 )
