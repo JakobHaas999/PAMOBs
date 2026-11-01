@@ -8,7 +8,7 @@ source("R/sim_surv.R")
 source("R/pamtree.R")
 library("parallel")
 
-n_sim <- 200
+n_sim <- 5
 n_obs <- 1000
 n_pilot <- 10000
 
@@ -102,7 +102,8 @@ run_job <- function(j) {
       cut = fit_cut,
       sp = sp_vals[d],
       maxdepth = 2,
-      alpha = alpha
+      alpha = alpha,
+      parm = c("x1", "x2")
     ),
     error = function(e) e
   )
@@ -154,8 +155,8 @@ run_job <- function(j) {
   )
 }
 
-progress_dir <- file.path(tempdir(), "progress")
-dir.create(progress_dir, showWarnings = FALSE)
+progress_dir <- tempfile(pattern = "pamtree-time-pilot-")
+dir.create(progress_dir)
 start_time <- Sys.time()
 
 results <- mclapply(
@@ -165,12 +166,23 @@ results <- mclapply(
   mc.preschedule = FALSE
 )
 
-failed <- vapply(results, inherits, logical(1), what = "try-error")
-if (any(failed)) {
-  warning("Worker crashed in jobs: ", paste(which(failed), collapse = ", "))
+worker_errors <- vapply(
+  results, inherits, logical(1), what = "try-error"
+)
+if (any(worker_errors)) {
+  print(results[worker_errors])
+  stop("Some simulation jobs failed outside the model error handler.")
 }
-results <- do.call(rbind, results[!failed])
-rownames(results) <- NULL
+
+results <- data.table::rbindlist(results, fill = TRUE)
+print(results[, .(
+  n_jobs = .N,
+  n_success = sum(success %in% TRUE),
+  n_missing_test = sum(
+    success %in% TRUE & !is.finite(root_p_value)
+  ),
+  n_splits = sum(split_detected %in% TRUE)
+), by = .(delta, sp)])
 
 ## Save
 results_dir <- "simulation_custom/results"
@@ -185,5 +197,5 @@ saveRDS(
       fit_formula = fit_formula
     )
   ),
-  file.path(results_dir, "pamtree_time_changing_effect.rds")
+  file.path(results_dir, "pamtree_time_changing_effect_pilot.rds")
 )
