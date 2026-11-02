@@ -40,10 +40,10 @@ reg <- makeExperimentRegistry(
     "survival", "partykit", "pammtools", "splines", "simsurv",
     "Formula", "checkmate", "sandwich"
   ),
-  source = normalizePath(c(
+  source = c(
     "R/sim_surv.R", "R/pemtree_splines.R",
     "simulation_batchtools/R/pemtree_covariate_helpers.R"
-  ))
+  )
 )
 reg$cluster.functions <- makeClusterFunctionsMulticore(ncpus = 16)
 
