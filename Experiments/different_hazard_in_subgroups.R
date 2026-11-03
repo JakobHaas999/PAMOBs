@@ -1,7 +1,7 @@
 ### setup
 source("setup.R")
 source("R/sim_surv.R")
-source("R/pemtree_splines.R")
+source("R/pamtree.R")
 
 ### 2 Scenarios
 ### Scenario 1: Different weibull parameter shape between z = 0 and z = 1
@@ -37,7 +37,7 @@ n_pilot <- 5000
 n_obs <- 1000
 
 fit_cut <- seq(0, admin_time, by = 0.1)
-fit_formula <- Surv(time, status) ~ bs(tend, df = 6) + x + offset(offset) | z
+fit_formula <- Surv(time, status) ~ s(tend, k = 10, bs = "ps") + x + offset(offset) | z
 
 # Scenario 1 -------------------------------------------------------------
 log_hazard <- function(t, z) {
@@ -90,12 +90,13 @@ for (i in seq_len(n_sim)) {
   observed_censoring_1[i] <- mean(sim_data$status == 0)
 
   fit <- tryCatch(
-    pemtree(
+    pamtree(
       formula = fit_formula,
       data = sim_data,
       cut = fit_cut,
       maxdepth = 2,
-      alpha = 0.05
+      alpha = 0.05,
+      gam_method = "REML"
     ),
     error = function(e) e
   )
@@ -196,12 +197,13 @@ for (i in seq_len(n_sim)) {
   observed_censoring_2[i] <- mean(sim_data$status == 0)
 
   fit <- tryCatch(
-    pemtree(
+    pamtree(
       formula = fit_formula,
       data = sim_data,
       cut = fit_cut,
       maxdepth = 2,
-      alpha = 0.05
+      alpha = 0.05,
+      gam_method = "REML"
     ),
     error = function(e) e
   )
@@ -232,7 +234,10 @@ power_2 <- mean(split_detected_2, na.rm = TRUE)
 cat(sprintf("Power in scenario 2: %.2f", power_2))
 
 # Inspect distribution of tau_hat
-hist(tau_hat, breaks = seq(-1, 1, by = 0.05))
+hist(tau_hat,
+  breaks = seq(-1, 1, by = 0.05),
+  main = expression("Histogram of" ~ hat(tau)), xlab = expression(hat(tau))
+)
 abline(v = 0, col = "red")
 mean(abs(tau_hat), na.rm = TRUE)
 mean(abs(tau_hat) <= 0.1, na.rm = TRUE)
