@@ -73,7 +73,9 @@ fit_and_summarise <- function(instance, cut_step, alpha, maxdepth, min_events) {
     )
   }
 
-  rbindlist(Map(summarise_fit, fits, c("oracle_log", "sp0", "sp30", "REML")))
+  out <- rbindlist(Map(summarise_fit, fits, c("oracle_log", "sp0", "sp30", "REML")))
+  out[, observed_censoring := mean(instance$status == 0)]
+  out
 }
 
 calibrate_one <- function(n_calibration, admin_time, censoring_rate) {

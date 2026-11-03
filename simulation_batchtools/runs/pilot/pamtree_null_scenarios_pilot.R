@@ -58,3 +58,4 @@ addExperiments(
 
 testJob(1, external = TRUE)
 submitJobs()
+waitForJobs()
