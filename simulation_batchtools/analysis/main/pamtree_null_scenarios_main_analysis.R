@@ -1,89 +1,33 @@
-library("data.table")
-library("batchtools")
-library("ggplot2")
+### Analysis: node-model diagnosis under H0 (split on time) -------------
+source("simulation_batchtools/analysis/analysis_helpers.R")
 
-reg <- suppressWarnings(
-  loadRegistry(
-    "simulation_batchtools/registries/main/pamtree_null_scenarios_main_v1/",
-    work.dir = getwd(),
-    writeable = FALSE
-  )
-)
+run_id <- "pamtree_null_scenarios_main_v1"
+results_dir <- results_path(run_id)
+plot_dir <- file.path(results_dir, "figures")
 
-res <- reduceResultsDataTable()
-res <- res[, result[[1]], by = "job.id"]
-results <- merge(unwrap(getJobPars()), res, by = "job.id")
+# One row per job and node model (variant)
+results <- load_results(run_id)
+mark_valid(results)
 
-summary_h0 <- results[,
-  {
-    ok <- is.na(error) & is.finite(p_root)
-    n_ok <- sum(ok)
+### Checks
+sum(!is.na(results$error))
+censoring_check <- check_censoring(results[variant == "oracle_log"], by = "censoring_rate")
+censoring_check
 
-    n_splits <- sum(split[ok])
-    split_rate <- if (n_ok) n_splits / n_ok else NA_real_
-    ci <- if (n_ok) binom.test(n_splits, n_ok)$conf.int else c(NA_real_, NA_real_)
-
-    list(
-      n_planned = .N,
-      n_completed = n_ok,
-      split_rate = split_rate,
-      ci_lower = ci[1],
-      ci_upper = ci[2]
-    )
-  },
+### Type-I-Error rate per node model
+summary_h0 <- summarise_rejection(
+  results[valid == TRUE],
   by = c("variant", "censoring_rate")
-]
+)
 print(summary_h0)
 
-# Plot Type-I-error rate
-summary_h0[, variant := factor(variant, levels = c("oracle_log", "sp0", "sp30", "REML"))]
-dodge <- position_dodge(width = 0.35)
-p_type1 <- ggplot(
+p_type1 <- plot_rejection_by_censoring(
   summary_h0,
-  aes(
-    x = factor(censoring_rate),
-    y = split_rate,
-    colour = variant,
-    group = variant
-  )
-) +
-  geom_hline(yintercept = 0.05, linetype = "dashed", colour = "grey45", linewidth = 0.5) +
-  geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper), position = dodge, width = 0.1, linewidth = 0.6) +
-  geom_point(position = dodge, size = 3) +
-  scale_colour_manual(
-    values = c(oracle_log = "#0072B2", sp0 = "#009E73", sp30 = "#E69F00", REML = "#D55E00"),
-    labels = c(
-      oracle_log = "Oracle: log(t)", sp0 = "P-spline, sp = 0",
-      sp30 = "P-spline, sp = 30", REML = "P-spline, REML"
-    )
-  ) +
-  scale_colour_manual(
-    values = c(oracle_log = "#000000", sp0 = "#0072B2", sp30 = "#D55E00", REML = "#CC79A7"),
-    labels = c(
-      oracle_log = "Oracle: log(t)", sp0 = "P-spline, sp = 0",
-      sp30 = "P-spline, sp = 30", REML = "P-spline, REML"
-    )
-  ) +
-  scale_x_discrete(labels = function(x) scales::percent(as.numeric(x), accuracy = 1)) +
-  scale_y_continuous(
-    limits = c(0, 1), breaks = seq(0, 1, by = 0.2),
-    labels = scales::label_percent(accuracy = 1),
-    expand = expansion(mult = c(0.02, 0.03))
-  ) +
-  labs(
-    title = "Rejection rate under H0 when splitting on time",
-    subtitle = "Weibull baseline hazard | n = 1000",
-    x = "Target censoring rate",
-    y = "Rejection Rate",
-    colour = "Nodemodel"
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = "top",
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
+  group = "variant",
+  y_max = 1,
+  title = "Rejection rate under H0 when splitting on time",
+  subtitle = "Weibull baseline hazard | n = 1000"
+)
 print(p_type1)
 
 ### Possible further analyses (not done) -------------------------------
@@ -97,22 +41,5 @@ print(p_type1)
 #   Reported in the text instead of a figure.
 
 ### Save tables and plots ----------------------------------------------
-saveRDS(results, file.path(results_dir, "job_results.rds"))
-fwrite(summary_h0, file.path(results_dir, "summary_h0.csv"))
-
-plot_dir <- file.path(results_dir, "figures")
-dir.create(plot_dir, showWarnings = FALSE, recursive = TRUE)
-
-save_plot <- function(plot, filename, width = 9, height = 6) {
-  # PDF for LaTeX
-  ggsave(
-    filename = file.path(plot_dir, paste0(filename, ".pdf")),
-    plot = plot, width = width, height = height, units = "in", device = cairo_pdf
-  )
-  # High-resolution PNG
-  ggsave(
-    filename = file.path(plot_dir, paste0(filename, ".png")),
-    plot = plot, width = width, height = height, units = "in", dpi = 300
-  )
-}
-save_plot(p_type1, "type1_error")
+save_tables(list(censoring_check = censoring_check, summary_h0 = summary_h0), results_dir)
+save_plot(p_type1, "type1_error", plot_dir)
