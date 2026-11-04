@@ -67,3 +67,6 @@ Rplots.pdf
 # Custom simulations
 /simulation_custom/results/
 /simulation_custom/figures/
+
+# Presentations (local only)
+/presentation/
