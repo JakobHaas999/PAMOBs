@@ -18,11 +18,15 @@ fit_and_summarise <- function(instance, cut_step, alpha, maxdepth, min_events) {
   # names(fits) <-
   fit_args <- list(
     data = data,
-    cut = seq(0, ceiling(max(data$time)), by = cut_step),
     min_events = min_events,
     alpha = alpha,
     maxdepth = maxdepth
   )
+
+  if (!is.na(cut_step)) {
+    fit_args$cut <- seq(0, ceiling(max(data$time)), by = cut_step)
+  }
+
   fits[[1]] <- tryCatch(
     {
       formula <- Surv(time, status) ~ log(tend) + offset(offset) | tend
@@ -77,6 +81,7 @@ fit_and_summarise <- function(instance, cut_step, alpha, maxdepth, min_events) {
   out[, observed_censoring := mean(instance$status == 0)]
   out
 }
+
 
 calibrate_one <- function(n_calibration, admin_time, censoring_rate) {
   d <- generate_data(n_calibration, admin_time, lambda_c = 0)
