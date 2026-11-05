@@ -75,4 +75,3 @@ pars <- unwrap(getJobPars())
 testJob(pars[setting == "structural_change" & delta == 1.5][1, job.id], external = TRUE)
 submitJobs()
 waitForJobs()
-+
