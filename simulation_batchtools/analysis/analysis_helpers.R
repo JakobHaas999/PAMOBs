@@ -30,11 +30,13 @@ label_censoring <- function(x) paste0(100 * as.numeric(x), "% censoring")
 label_df <- function(x) paste0("df = ", x)
 label_delta <- function(x) paste0("delta = ", x)
 label_percent_x <- function(x) scales::percent(as.numeric(x), accuracy = 1)
+labels_tree_model <- c(pemtree = "PEM tree", weibull_aft = "Weibull AFT tree")
 
 # One labeller for all facets; unknown variables keep their raw value
 thesis_labeller <- labeller(
   scenario = labels_scenario,
   split_type = labels_split_type,
+  model = labels_tree_model,
   covariate_setting = labels_covariate_setting,
   censoring_rate = label_censoring,
   df = label_df,
@@ -149,30 +151,36 @@ check_censoring <- function(results, by) {
 # Split (rejection) rate with exact binomial CI; pass only valid jobs.
 # Used for the type I error (delta = 0) and for the power (delta > 0).
 summarise_rejection <- function(data, by, split_col = "split") {
-  out <- data[, {
-    k <- sum(get(split_col))
-    ci <- binom.test(k, .N)$conf.int
-    list(n_valid = .N, n_splits = k, split_rate = k / .N, ci_lower = ci[1], ci_upper = ci[2])
-  }, by = by]
+  out <- data[,
+    {
+      k <- sum(get(split_col))
+      ci <- binom.test(k, .N)$conf.int
+      list(n_valid = .N, n_splits = k, split_rate = k / .N, ci_lower = ci[1], ci_upper = ci[2])
+    },
+    by = by
+  ]
   setorderv(out, by)
   out[]
 }
 
 # Accuracy of the estimated split point; pass only jobs with a split.
 summarise_split_points <- function(data, truth, by, within = NULL, split_col = "split_point") {
-  out <- data[, {
-    sp <- get(split_col)
-    res <- list(
-      n_splits = .N,
-      mean_split = mean(sp),
-      sd_split = sd(sp),
-      bias = mean(sp - truth),
-      mean_abs_error = mean(abs(sp - truth)),
-      rmse = sqrt(mean((sp - truth)^2))
-    )
-    if (!is.null(within)) res[[paste0("share_within_", within)]] <- mean(abs(sp - truth) <= within)
-    res
-  }, by = by]
+  out <- data[,
+    {
+      sp <- get(split_col)
+      res <- list(
+        n_splits = .N,
+        mean_split = mean(sp),
+        sd_split = sd(sp),
+        bias = mean(sp - truth),
+        mean_abs_error = mean(abs(sp - truth)),
+        rmse = sqrt(mean((sp - truth)^2))
+      )
+      if (!is.null(within)) res[[paste0("share_within_", within)]] <- mean(abs(sp - truth) <= within)
+      res
+    },
+    by = by
+  ]
   setorderv(out, by)
   out[]
 }
