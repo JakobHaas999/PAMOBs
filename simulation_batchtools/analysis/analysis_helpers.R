@@ -23,6 +23,12 @@ labels_model <- c(
   sp30 = "P-spline, sp = 30", REML = "P-spline, REML"
 )
 
+# Recovered tree structure (complex tree study)
+pal_structure <- c(
+  "Correct tree" = "#44AA99", "Correct tree + extra splits" = "#A5D7CE",
+  "Time split missed" = "#BBBBBB", "Other" = "#CC6677"
+)
+
 labels_scenario <- c(cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard")
 labels_split_type <- c(binary = "Binary z", numeric = "Numeric z")
 labels_covariate_setting <- c(none = "Without covariates", included = "With covariates")
@@ -31,6 +37,10 @@ label_df <- function(x) paste0("df = ", x)
 label_delta <- function(x) paste0("delta = ", x)
 label_percent_x <- function(x) scales::percent(as.numeric(x), accuracy = 1)
 labels_tree_model <- c(pemtree = "PEM tree", weibull_aft = "Weibull AFT tree")
+labels_scenario <- c(
+  cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard",
+  covar_time_chang = "Time-varying treatment effect", covar_struc_chang = "Baseline shift"
+)
 
 # One labeller for all facets; unknown variables keep their raw value
 thesis_labeller <- labeller(
@@ -41,6 +51,8 @@ thesis_labeller <- labeller(
   censoring_rate = label_censoring,
   df = label_df,
   delta = label_delta,
+  dz = function(x) paste0("dz = ", x),
+  dt = function(x) paste0("dt = ", x),
   .default = label_value
 )
 
