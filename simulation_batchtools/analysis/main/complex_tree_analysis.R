@@ -52,8 +52,8 @@ p_structure_time_chang <- ggplot(
   scale_x_discrete(labels = label_percent_x) +
   scale_y_continuous(labels = scales::label_percent(accuracy = 1)) +
   labs(
-    title = "Recovered tree structure | Time-varying treatment effect in the older group",
-    subtitle = "True tree: split on z at 0, then on time at 3 in the older branch only | n = 1000",
+    title = "Recovered tree structure | Time-varying treatment effect with z > 0",
+    subtitle = "True tree: split on z at 0, then on time at 3 in the group with z > 0 only | n = 1000",
     x = "Target censoring rate", y = "Share of trees", fill = NULL
   ) +
   theme_thesis(discrete_x = TRUE)
