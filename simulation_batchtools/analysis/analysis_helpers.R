@@ -36,7 +36,7 @@ label_censoring <- function(x) paste0(100 * as.numeric(x), "% censoring")
 label_df <- function(x) paste0("df = ", x)
 label_delta <- function(x) paste0("delta = ", x)
 label_percent_x <- function(x) scales::percent(as.numeric(x), accuracy = 1)
-labels_tree_model <- c(pemtree = "PEM tree", weibull_aft = "Weibull AFT tree")
+labels_tree_model <- c(pemtree = "PEM tree", pamtree = "PAM tree (REML)", weibull_aft = "Weibull AFT tree")
 labels_scenario <- c(
   cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard",
   covar_time_chang = "Time-varying treatment effect", covar_struc_chang = "Baseline shift"
