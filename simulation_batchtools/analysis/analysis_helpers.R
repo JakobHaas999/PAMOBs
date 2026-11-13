@@ -36,7 +36,10 @@ label_censoring <- function(x) paste0(100 * as.numeric(x), "% censoring")
 label_df <- function(x) paste0("df = ", x)
 label_delta <- function(x) paste0("delta = ", x)
 label_percent_x <- function(x) scales::percent(as.numeric(x), accuracy = 1)
-labels_tree_model <- c(pemtree = "PEM tree", pamtree = "PAM tree (REML)", weibull_aft = "Weibull AFT tree")
+labels_tree_model <- c(
+  pemtree = "PEM tree", pamtree = "PAM tree (REML)", weibull_aft = "Weibull AFT tree",
+  goodman = "Goodman et al. (2011)"
+)
 labels_scenario <- c(
   cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard",
   covar_time_chang = "Time-varying treatment effect", covar_struc_chang = "Baseline shift"
@@ -145,6 +148,10 @@ mark_valid <- function(results) {
   }
   results[, valid := is.na(error) & !is.na(p_root)]
   results[valid == FALSE, split := NA]
+  # Fixed model order in all tables and facets (PEM tree first, as in labels_tree_model)
+  if ("model" %in% names(results) && all(results$model %in% names(labels_tree_model))) {
+    results[, model := factor(model, levels = intersect(names(labels_tree_model), unique(model)))]
+  }
   invisible(results)
 }
 

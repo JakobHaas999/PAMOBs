@@ -43,8 +43,7 @@ power_curves <- lapply(sort(unique(summary_power$censoring_rate)), function(rate
   plot_power_curve(
     summary_power[censoring_rate == rate],
     facet = facet_thesis(rows = "scenario", cols = "df"),
-    x_breaks = unique(summary_power$delta),
-    subtitle = paste0(100 * rate, "% censoring | HR = exp(delta): 1, 1.65, 2.72, 4.48")
+    x_breaks = unique(summary_power$delta)
   )
 })
 names(power_curves) <- paste0("power_curves_cens", c(30, 50, 70))
@@ -55,6 +54,7 @@ summary_split_point <- summarise_split_points(
   split_data,
   truth = 3,
   by = c("scenario", "df", "n", "censoring_rate", "delta"),
+  within = 0.5,
   split_col = "tau_hat"
 )
 

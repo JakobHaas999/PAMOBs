@@ -25,7 +25,7 @@ p_type1_binary <- plot_rejection_by_censoring(
   summary_h0[split_type == "binary"],
   group = "n",
   facet = facet_thesis(rows = "model", cols = "scenario"),
-  title = "Binary z"
+  title = NULL
 )
 p_type1_binary
 
@@ -33,7 +33,7 @@ p_type1_numeric <- plot_rejection_by_censoring(
   summary_h0[split_type == "numeric"],
   group = "n",
   facet = facet_thesis(rows = "model", cols = "scenario"),
-  title = "Numeric z"
+  title = NULL
 )
 p_type1_numeric
 
@@ -80,7 +80,7 @@ power_curves_numeric <- lapply(c("cubic", "weibull"), function(s) {
     data,
     facet = facet_thesis(rows = "model", cols = "censoring_rate"),
     x_breaks = seq(0, 1, by = 0.25),
-    title = paste("Power to detect effect modification of x by z |", labels_scenario[[s]], "| Numeric split variable z")
+    title = NULL
   )
 })
 power_curves_names <- paste0("power_curves_", c("cubic", "weibull"))
