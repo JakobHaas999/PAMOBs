@@ -38,7 +38,10 @@ label_delta <- function(x) paste0("delta = ", x)
 label_percent_x <- function(x) scales::percent(as.numeric(x), accuracy = 1)
 labels_tree_model <- c(
   pemtree = "PEM tree", pamtree = "PAM tree (REML)", weibull_aft = "Weibull AFT tree",
-  goodman = "Goodman et al. (2011)"
+  goodman = "Goodman et al. (2011)", pemtree_grid = "PEM tree (grid)",
+  pemtree_event = "PEM tree (event times)",
+  es_grid = "Exposure-scaled PEM tree (grid)",
+  es_event = "Exposure-scaled PEM tree (event times)"
 )
 labels_scenario <- c(
   cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard",
