@@ -34,9 +34,7 @@ censoring_plot <- 0.5
 p_ecdf <- plot_pvalue_ecdf(
   res[delta == 0 & censoring_rate == censoring_plot & valid == TRUE],
   group = "n",
-  facet = facet_thesis_wrap("model"),
-  title = "Distribution of p values under H0",
-  subtitle = paste0("Target censoring rate = ", 100 * censoring_plot, "%")
+  facet = facet_thesis_wrap("model")
 )
 p_ecdf
 
