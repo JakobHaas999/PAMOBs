@@ -31,11 +31,11 @@ p_type1_binary <- plot_rejection_by_censoring(
 )
 p_type1_binary
 
+models_pen <- c("pamtree", "pemtree")
 p_type1_numeric <- plot_rejection_by_censoring(
-  summary_h0[split_type == "numeric"],
+  summary_h0[split_type == "numeric" & model %in% models_pen],
   group = "n",
-  facet = facet_thesis(rows = "model", cols = "scenario"),
-  title = "Numeric z"
+  facet = facet_thesis(rows = "model", cols = "scenario")
 )
 p_type1_numeric
 
@@ -155,7 +155,7 @@ save_tables(
 )
 
 save_plot(p_type1_binary, "type1_error_binary", plot_dir)
-save_plot(p_type1_numeric, "type1_error_numeric", plot_dir)
+save_plot(p_type1_numeric, "type1_error_numeric_pam_pem", plot_dir)
 save_plot(p_ecdf_binary, paste0("p_value_ecdf_binary_cens", 100 * censoring_plot), plot_dir)
 save_plot(p_ecdf_numeric, paste0("p_value_ecdf_numeric_cens", 100 * censoring_plot), plot_dir)
 for (nm in names(power_curves_binary)) {

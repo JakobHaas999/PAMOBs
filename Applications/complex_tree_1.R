@@ -21,8 +21,9 @@ delta <- 0.5
 
 sim_formula <- ~ beta0_0 * (z == 0) + beta0_1 * (z == 1) + delta * (t > tau) * (z == 1)
 
+set.seed(667)
 data <- sim_surv(
-  sim_formula, data.frame(id = seq_len(1000), z = rbinom(1000, size = 1, prob = 0.5)),
+  sim_formula, data.frame(id = seq_len(1000), z = factor(rbinom(1000, size = 1, prob = 0.5))),
   breaks = tau, admin_time = 10, lambda_c = 0.1
 )
 mean(data$status == 0)
@@ -71,3 +72,43 @@ ggplot(nd, aes(x = tend, colour = z)) +
   geom_line(aes(y = hazard_true), linetype = "dashed") +
   labs(x = "t", y = expression(lambda(t))) +
   theme_bw()
+
+# Rep 10 times to look how often the tree was recovered
+n_sim <- 10
+seeds <- 1742 + seq_len(n_sim)
+
+fitted_trees <- vector("list", length = n_sim)
+split_var <- vector("list", length = n_sim)
+
+for (i in seq_len(n_sim)) {
+  set.seed(seeds[i])
+  sim_data <- sim_surv(
+    ~ beta0_0 * (z == 0) + beta0_1 * (z == 1) + delta * (t > tau) * (z == 1),
+    data = data.frame(
+      id = seq_len(1000), z = factor(rbinom(1000, prob = 0.5, size = 1))
+    ),
+    admin_time = 10,
+    breaks = tau,
+    lambda_c = 0.1
+  )
+
+  cut <- seq(0, 10, by = 0.1)
+  fit <- pemtree(
+    formula = Surv(time, status) ~ offset(offset) | z + tend,
+    data = sim_data,
+    cut = cut,
+    min_events = 20,
+    alpha = 0.05
+  )
+
+  fitted_trees[[i]] <- fit$tree
+  inner_nodes <- setdiff(nodeids(fit$tree), nodeids(fit$tree, terminal = TRUE))
+  split_vars <- unlist(nodeapply(
+    fit$tree,
+    ids = inner_nodes,
+    FUN = function(node) {
+      colnames(fit$tree$data)[split_node(node)$varid]
+    }
+  ))
+  split_var[[i]] <- split_vars
+}

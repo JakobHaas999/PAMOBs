@@ -24,9 +24,7 @@ print(summary_h0)
 p_type1 <- plot_rejection_by_censoring(
   summary_h0,
   group = "variant",
-  y_max = 1,
-  title = "Rejection rate under H0 when splitting on time",
-  subtitle = "Weibull baseline hazard | n = 1000"
+  y_max = 1
 )
 print(p_type1)
 
