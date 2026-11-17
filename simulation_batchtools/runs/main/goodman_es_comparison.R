@@ -96,7 +96,7 @@ addAlgorithm("models_fit", fun = function(data, job, instance, alpha, maxdepth, 
     {
       goodman_forward(
         time = data$time, status = data$status,
-        K_max = K_max, alpha = alpha, levels = "goodman"
+        K_max = K_max, alpha = alpha, levels = goodman_levels
       )
     },
     error = function(e) e
@@ -165,5 +165,5 @@ pars <- unwrap(getJobPars())
 testJob(pars[n == 1000 & delta == 1 & censoring_rate == 0.3][1, job.id], external = TRUE)
 ids <- findNotDone()
 ids[, chunk := chunk(job.id, chunk.size = 50)]
-submitJobs()
+submitJobs(ids)
 waitForJobs()
