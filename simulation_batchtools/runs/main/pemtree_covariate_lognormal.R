@@ -181,6 +181,6 @@ pars <- unwrap(getJobPars())
 testJob(pars[n == 1000 & delta == 0.75][1, job.id], external = TRUE)
 
 ids <- findNotDone()
-ids[, chunck := chunk(job.id, chunk.size = 25)]
+ids[, chunk := chunk(job.id, chunk.size = 25)]
 submitJobs(ids)
 waitForJobs()
