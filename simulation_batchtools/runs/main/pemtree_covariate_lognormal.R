@@ -6,7 +6,7 @@ source("R/sim_surv.R")
 source("R/pemtree_splines.R")
 
 # ----- 1. Design ------
-run_id <- "pemtree_covariate_lognormal_v1"
+run_id <- "pemtree_covariate_lognormal_v2"
 n_rep <- 1000
 beta <- 0.6
 admin_time <- 10
