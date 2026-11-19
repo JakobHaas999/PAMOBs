@@ -41,7 +41,8 @@ labels_tree_model <- c(
   goodman = "Goodman et al. (2011)", pemtree_grid = "PEM tree (grid)",
   pemtree_event = "PEM tree (event times)",
   es_grid = "Exposure-scaled PEM tree (grid)",
-  es_event = "Exposure-scaled PEM tree (event times)"
+  es_event = "Exposure-scaled PEM tree (event times)",
+  pemtree_es = "Exposure-scaled PEM tree"
 )
 labels_scenario <- c(
   cubic = "Cubic baseline hazard", weibull = "Weibull baseline hazard",
