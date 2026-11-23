@@ -1,3 +1,4 @@
+Sys.setenv(OMP_NUM_THREADS = 1, OPENBLAS_NUM_THREADS = 1, MKL_NUM_THREADS = 1)
 ### Run: Multiple split points (2 to 3) in a piecewise constant hazard
 ### setup
 library("batchtools")
