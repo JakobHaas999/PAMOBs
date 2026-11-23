@@ -113,3 +113,34 @@ split_stability <- function(fit_fun, fit_args, B = 500, frac = 0.632) {
     idx = idx_list
   )
 }
+
+stability_pem_tree <- function(data, cut, B = 499, frac = 0.632, alpha = 0.05,
+                               pi0 = 0.1, R = 1e4, min_events = 20) {
+  fit_one <- function(d) {
+    ped_args <- list(formula = Surv(time, status) ~ 1, data = d)
+    if (!is.null(cut)) ped_args$cut <- cut
+    ped <- do.call(pammtools::as_ped, ped_args)
+    fit <- pem_tree(ped, alpha = alpha, pi0 = pi0, R = R, minevents = min_events, maxdepth = 2)
+    root <- fit[fit$depth == 1, ]
+    c(
+      split = !root$terminal,
+      spit_point = if (!root$terminal) root$split else NA_real_
+    )
+  }
+
+  full <- fit_one(data)
+  subsample_size <- floor(frac * nrow(data))
+
+  subsample_res <- t(vapply(seq_len(B), function(b) {
+    data_star <- data[sample.int(nrow(data), subsample_size), , drop = FALSE]
+    tryCatch(fit_one(data_star), error = function(e) c(split = NA, split_point = NA_real_))
+  }, numeric(2)))
+
+  data.table::data.table(
+    b = seq_len(B),
+    split = as.logical(sub[, "split"]),
+    split_point = sub[, "split_point"],
+    full_split = rep(as.logical(full[["split"]]), B),
+    full_split_point = rep(full[["split_point"]], B)
+  )
+}
