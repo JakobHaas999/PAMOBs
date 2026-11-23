@@ -124,7 +124,7 @@ stability_pem_tree <- function(data, cut, B = 499, frac = 0.632, alpha = 0.05,
     root <- fit[fit$depth == 1, ]
     c(
       split = !root$terminal,
-      spit_point = if (!root$terminal) root$split else NA_real_
+      split_point = if (!root$terminal) root$split else NA_real_
     )
   }
 
@@ -138,8 +138,8 @@ stability_pem_tree <- function(data, cut, B = 499, frac = 0.632, alpha = 0.05,
 
   data.table::data.table(
     b = seq_len(B),
-    split = as.logical(sub[, "split"]),
-    split_point = sub[, "split_point"],
+    split = as.logical(subsample_res[, "split"]),
+    split_point = subsample_res[, "split_point"],
     full_split = rep(as.logical(full[["split"]]), B),
     full_split_point = rep(full[["split_point"]], B)
   )
