@@ -9,9 +9,9 @@ res <- load_results(run_id)
 mark_valid(res)
 
 ## 1. Checks
-invalid_jobs <- res[, .(n_valid = sum(valid == FALSE), share_invalid = mean(valid == FALSE)),
+invalid_jobs <- res[, .(n_invalid = sum(valid == FALSE), share_invalid = mean(valid == FALSE)),
   by = c("scenario", "df", "n", "censoring_rate")
-][n_valid > 0]
+][n_invalid > 0]
 censoring_check <- check_censoring(res[df == 6], by = c("scenario", "delta", "censoring_rate"))
 
 ## 2. Type I error (delta = 0)

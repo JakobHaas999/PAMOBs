@@ -55,8 +55,25 @@ fit <- pem_tree(
   pi0 = 0.1,
   R = 1e4,
   minevents = 20,
-  maxdepth = 2
+  maxdepth = Inf
 )
 fit
 
-# Repeat procedure 1000 times
+# Compare with truth
+predict_pem_tree <- function(fit, newtimes) {
+  leaves <- fit[fit$terminal, ]
+  leaves <- leaves[order(leaves$from), ]
+  idx <- findInterval(newtimes, leaves$from, left.open = TRUE)
+  idx[idx == 0] <- 1
+  hazard <- leaves$lambda[idx]
+  data.frame(t = newtimes, hazard = hazard)
+}
+
+pred <- predict_pem_tree(fit, t_grid)
+pred$hazard_true <- exp(log(0.05) + log(1.5) + 0.5 * log(pred$t) + 0.5 * (pred$t >= 3))
+
+ggplot(pred, aes(x = t)) +
+  geom_line(aes(y = hazard, linetype = "Estimate")) +
+  geom_line(aes(y = hazard_true, linetype = "True")) +
+  labs(x = "t", y = expression(lambda(t)), linetype = NULL) +
+  theme_bw()

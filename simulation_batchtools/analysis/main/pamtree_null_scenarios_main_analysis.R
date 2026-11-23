@@ -10,7 +10,10 @@ results <- load_results(run_id)
 mark_valid(results)
 
 ### Checks
-sum(!is.na(results$error))
+invalid_jobs <- results[, .(n_invalid = sum(!valid), share_invalid = mean(!valid)),
+  by = c("variant", "censoring_rate")
+][n_invalid > 0]
+invalid_jobs
 censoring_check <- check_censoring(results[variant == "oracle_log"], by = "censoring_rate")
 censoring_check
 

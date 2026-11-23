@@ -75,10 +75,10 @@ power_curves_binary <- lapply(c("cubic", "weibull"), function(s) {
   )
 })
 power_curves_numeric <- lapply(c("cubic", "weibull"), function(s) {
-  data <- power_curve_data[scenario == s & split_type == "numeric"]
+  data <- power_curve_data[scenario == s & split_type == "numeric" & censoring_rate == 0.5]
   plot_power_curve(
     data,
-    facet = facet_thesis(rows = "model", cols = "censoring_rate"),
+    facet = facet_thesis(rows = "model"),
     x_breaks = seq(0, 1, by = 0.25),
     title = NULL
   )

@@ -27,8 +27,9 @@ summary_h0
 p_type1 <- plot_rejection_by_censoring(
   summary_h0,
   group = "n",
-  facet = facet_thesis(cols = "model")
+  facet = facet_thesis(rows = "model")
 )
+p_type1
 
 ## 3. Power analysis
 summary_power <- summarise_rejection(
@@ -61,10 +62,13 @@ summary_split_point <- summarise_split_points(
 )
 
 # Plot split points as boxplot
+tau_hat_data[, split_error := split_point - tau]
 p_box <- plot_split_points_box(
   tau_hat_data[delta > 0 & censoring_rate == 0.5],
-  truth = 3,
-  facet = facet_thesis(rows = "model")
+  split_col = "split_error",
+  truth = 0,
+  facet = facet_thesis(rows = "model"),
+  y_lab = expression(hat(tau) - tau)
 )
 p_box
 
